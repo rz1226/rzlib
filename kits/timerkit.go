@@ -2,6 +2,7 @@ package kits
 
 //时间记录
 import (
+	"fmt"
 	"strconv"
 	"sync/atomic"
 	"time"
@@ -42,7 +43,7 @@ func NewTimerKit(name, readme string) *TimerKit {
 	return tk
 }
 
-func (tk *TimerKit) Show( ) string {
+func (tk *TimerKit) Show() string {
 	str := ""
 	str += "----------------------\n计时器名称:" + tk.name + "\n计时器说明:" + tk.readme + "\n"
 	str += tk.Info()
@@ -114,10 +115,10 @@ func (t *timerKitNode) end(tick *Tick) {
 	atomic.AddInt64(&t.count, 1)
 	atomic.AddInt64(&t.sum, du)
 	count := atomic.LoadInt64(&t.count)
-	t.last.PutContentsAndFormat("操作是:"+tick.info+" 耗时秒是:", float64(du)/float64(time.Second))
+	t.last.PutContentsAndFormat("操作是:"+tick.info,"耗时秒是:" + fmt.Sprint(float64(du)/float64(time.Second)))
 	sum := atomic.LoadInt64(&t.sum)
 	if du > sLOWNANO+sum/(count+1) {
-		t.slowest.PutContentsAndFormat("操作是:"+tick.info+" 耗时秒:", float64(du)/float64(time.Second))
+		t.slowest.PutContentsAndFormat("操作是:"+tick.info,"耗时秒是:" + fmt.Sprint(float64(du)/float64(time.Second)))
 	}
 }
 func (t *timerKitNode) getCount() int64 {

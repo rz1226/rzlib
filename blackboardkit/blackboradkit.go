@@ -5,6 +5,8 @@ import (
 	"github.com/rz1226/rzlib/kits"
 	"github.com/rz1226/rzlib/serverkit"
 	"net/http"
+	"os"
+	"reflect"
 	"sync"
 	"time"
 )
@@ -35,7 +37,7 @@ bb.Info.Ends(t)
 
 */
 
-var allbb *AllBB
+var allbb *allBB
 
 func init() {
 	allbb = sNewAllBB()
@@ -49,18 +51,18 @@ func ShowGroup(groupName string) string {
 }
 
 //所有的bb
-type AllBB struct {
+type allBB struct {
 	data map[string][]*BlackBoradKit
 	mu   *sync.Mutex
 }
 
-func sNewAllBB() *AllBB {
-	a := &AllBB{}
+func sNewAllBB() *allBB {
+	a := &allBB{}
 	a.mu = &sync.Mutex{}
 	a.data = make(map[string][]*BlackBoradKit, 0)
 	return a
 }
-func (a *AllBB) add(bb *BlackBoradKit) {
+func (a *allBB) add(bb *BlackBoradKit) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	groupName := bb.groupname
@@ -70,7 +72,7 @@ func (a *AllBB) add(bb *BlackBoradKit) {
 	}
 	a.data[groupName] = append(a.data[groupName], bb)
 }
-func (a *AllBB) show(groupName string) string {
+func (a *allBB) show(groupName string) string {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	str := ""
@@ -84,7 +86,7 @@ func (a *AllBB) show(groupName string) string {
 
 	return str
 }
-func (a *AllBB) showAll() string {
+func (a *allBB) showAll() string {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	str := ""
@@ -101,6 +103,7 @@ func (a *AllBB) showAll() string {
 
 type BlackBoradKit struct {
 	logKit           *kits.LogKit
+	logErrKit        *kits.LogKit
 	timerKit         *kits.TimerKit
 	counterKit       *kits.CounterKit
 	bbStartTime      string
@@ -131,7 +134,8 @@ func (bb *BlackBoradKit) SetNoPrintToConsole(result bool) {
 
 //初始化日志kit
 func (bb *BlackBoradKit) initLogKit() {
-	bb.logKit = kits.NewLogKit(bb.name, bb.readme)
+	bb.logKit = kits.NewLogKit(bb.name+"_info", "Log记录："+bb.readme)
+	bb.logErrKit = kits.NewLogKit(bb.name+"_error", "Err记录："+bb.readme)
 }
 
 //初始化计数器kit
@@ -151,7 +155,12 @@ func (bb *BlackBoradKit) Log(logs ...interface{}) {
 		fmt.Print(str)
 	}
 }
-
+func (bb *BlackBoradKit) Err(logs ...interface{}) {
+	str := bb.logErrKit.PutContentsAndFormat(logs...)
+	if bb.noPrintToConsole == false {
+		fmt.Print(str)
+	}
+}
 /*---------------------------timer---------------------------------*/
 func (bb *BlackBoradKit) Start(tickInfo string) *kits.Tick {
 	return bb.timerKit.Start(tickInfo)
@@ -172,10 +181,13 @@ func (bb *BlackBoradKit) IncBy(num int64) {
 //获取监控信息
 func (bb *BlackBoradKit) show() string {
 
-	str := "\n\n\n----------------" + bb.name + " blackboard info ----------------- : \n\n\n"
+	str := "\n\n\n########################" + bb.groupname + ":" + bb.name + "(" + bb.readme + "):" + " blackboard info #################### : \n\n\n"
 
 	str += "监控启动时间:" + bb.bbStartTime + "\n"
 	str += bb.logKit.Show()
+
+	str += "\n\n\n"
+	str += bb.logErrKit.Show()
 
 	str += "\n\n\n"
 	str += bb.counterKit.Show()
@@ -194,4 +206,53 @@ func httpShowAll(w http.ResponseWriter, r *http.Request) {
 
 func StartMonitor(port string) {
 	go serverkit.NewSimpleHttpServer().Add("/", httpShowAll).Start(port)
+}
+
+/**
+自动初始化这样一个结构体， groupname 自己输入参数， 属性名为bb名，readme为bb说明
+type SomeBB struct{
+	InsertUser *blackboardkit.BlackBoradKit  `readme:"插入用户信息 "`
+	GaoDeApi  *blackboardkit.BlackBoradKit `readme:"调用高德地图api "`
+	Db *blackboardkit.BlackBoradKit `readme:"调用数据库 "`
+
+}
+
+*/
+
+func BBinit(dstStruct interface{}, groupName string) {
+	currentField := ""
+	defer func() {
+		if co := recover(); co != nil {
+			str := "bbinit error:发生panic, field=" + currentField + ":" + fmt.Sprint(co)
+			fmt.Println(str)
+			os.Exit(1)
+		}
+	}()
+
+	v := reflect.ValueOf(dstStruct)
+	t := v.Type().Elem()
+	switch v.Kind() {
+	case reflect.Ptr:
+		for i := 0; i < v.Elem().NumField(); i++ {
+			fieldName := t.Field(i).Name
+			tag := t.Field(i).Tag.Get("readme")
+
+			vType := t.Field(i).Type
+
+			if fmt.Sprint(vType) == "*blackboardkit.BlackBoradKit" {
+
+				bb := NewBlockBorad(groupName, fieldName, tag)
+				v.Elem().Field(i).Set(reflect.ValueOf(bb))
+			} else {
+				fmt.Println("bbinit error: 要初始化的结构体的属性的类型必须是*blackboardkit.BlackBoradKit")
+				os.Exit(1)
+			}
+		}
+
+	default:
+		fmt.Println("bbinit error:要初始化的结构体指针")
+		os.Exit(1)
+
+	}
+
 }

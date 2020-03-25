@@ -1,6 +1,5 @@
 package serverkit
 
-
 //设立简单的http服务，一般用来做测试，例如测试http客户端，等
 //服务端单个请求不能超过60秒
 import (

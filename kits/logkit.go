@@ -10,6 +10,7 @@ import (
 const (
 	sIZE      = 500 //log存储空间总长度
 	fetchSIZE = 40  //一次拿多少
+	strSIZE  = 3000 //单条日志的最大限制
 )
 
 type LogKit struct {
@@ -44,13 +45,22 @@ func (lk *LogKit) FetchContents(count int) string {
 func (lk *LogKit) PutContentsAndFormat(a ...interface{}) string {
 	cq := lk.logs
 	buffer := bytes.Buffer{}
-	buffer.WriteString(lk.name)
-	buffer.WriteString(" ")
+	//buffer.WriteString(lk.name)
+	//buffer.WriteString(" ")
 	buffer.WriteString(time.Now().Format("2006-01-02 15:04:05"))
-	buffer.WriteString(" ")
-	buffer.WriteString(fmt.Sprintln(a...))
+	buffer.WriteString("\n")
+	for _, v := range a {
+		str := fmt.Sprint(v)
+		if len(str ) > strSIZE{
+			str = str[0:strSIZE] + "......后面的内容过长截断......"
+		}
+		buffer.WriteString(str)
+		//每一个参数后面都加一个换行
+		buffer.WriteString("\n")
+	}
+
 	logStr := buffer.String()
-	cq.Put(logStr)
+	cq.Put(logStr + "\n")
 	return logStr
 }
 
@@ -62,6 +72,7 @@ func formatFetchedLog(values []interface{}, id uint64) string {
 		str, ok := v.(string)
 		if ok {
 			buffer.WriteString(str)
+
 		}
 	}
 	return buffer.String()
