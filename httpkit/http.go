@@ -31,85 +31,81 @@ func NewHttpClient(timeout uint, maxIdle int) *HttpClient {
 	}
 	hc := &HttpClient{}
 	hc.client = client
-	hc.bb = blackboardkit.NewBlockBorad("httpkit","httpclient","http客户端记录")
+	hc.bb = blackboardkit.NewBlockBorad("httpkit", "httpclient", "http客户端记录")
 	return hc
 }
 
 //简化的post
-func (hc *HttpClient) Post(url string, body string ) (string, error) {
+func (hc *HttpClient) Post(url string, body string) (string, error) {
 	var buf io.Reader
 	buf = strings.NewReader(body)
 
-	t := hc.bb.Start(  "http post: "+url)
+	t := hc.bb.Start("http post: " + url)
 	res, err := hc.client.Post(url, "application/x-www-form-urlencoded;charset=utf-8", buf)
 	hc.bb.End(t)
 	if err != nil {
-		hc.bb.Err(  "http post error: "," url="+url, "err=", err)
+		hc.bb.Err("http post error: ", " url="+url, "err=", err)
 		return "", err
 	}
 	defer res.Body.Close()
 	content, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		hc.bb.Err( "http post read error: "," url="+url, "err=", err)
+		hc.bb.Err("http post read error: ", " url="+url, "err=", err)
 		return "", err
 	}
-	hc.bb.Log(  "http post result: "," url="+url,"body="+body , " resp="+string(content))
+	hc.bb.Log("http post result: ", " url="+url, "body="+body, " resp="+string(content))
 	return string(content), nil
 }
 
 func (hc *HttpClient) PostForm(url string, data url.Values) (string, error) {
-	t := hc.bb.Start(  "http post: "+url)
+	t := hc.bb.Start("http post: " + url)
 	res, err := hc.client.PostForm(url, data)
 	hc.bb.End(t)
 	if err != nil {
-		hc.bb.Err( "http post error: "," url="+url, "err=", err)
+		hc.bb.Err("http post error: ", " url="+url, "err=", err)
 		return "", err
 	}
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		hc.bb.Err(  "http post read error: "," url="+url, "err=", err)
+		hc.bb.Err("http post read error: ", " url="+url, "err=", err)
 		return "", err
 	}
-	hc.bb.Log(  "http post result:"," url="+url,"data="+fmt.Sprint(data ), " resp: "+string(body))
+	hc.bb.Log("http post result:", " url="+url, "data="+fmt.Sprint(data), " resp: "+string(body))
 	return string(body), nil
 }
 
 func (hc *HttpClient) Get(url string) (string, error) {
-	t := hc.bb.Start( "http get: "+url)
+	t := hc.bb.Start("http get: " + url)
 	res, err := hc.client.Get(url)
 	hc.bb.End(t)
 	if err != nil {
-		hc.bb.Err( "http get error:","  url="+url, "err=", err)
+		hc.bb.Err("http get error:", "  url="+url, "err=", err)
 		return "", err
 	}
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		hc.bb.Err( "http get read error:"," url="+url, "err=", err)
+		hc.bb.Err("http get read error:", " url="+url, "err=", err)
 		return "", err
 	}
-	hc.bb.Log( "http get result:","url="+url, "resp: "+string(body))
+	hc.bb.Log("http get result:", "url="+url, "resp: "+string(body))
 	return string(body), nil
 }
 
-
-
-func (hc *HttpClient) Do(req *http.Request) (string,   error){
-	res, err := hc.client.Do( req )
+func (hc *HttpClient) Do(req *http.Request) (string, error) {
+	res, err := hc.client.Do(req)
 	if err != nil {
-		hc.bb.Err(  "http   error:","  url="+req.URL.String(),"header="+fmt.Sprint(req.Header),"body="+fmt.Sprint(req.Body), "err=", err)
+		hc.bb.Err("http   error:", "  url="+req.URL.String(), "header="+fmt.Sprint(req.Header), "body="+fmt.Sprint(req.Body), "err=", err)
 		return "", err
 	}
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		hc.bb.Err(  "http   error: "," url="+req.URL.String(),"header="+fmt.Sprint(req.Header),"body="+fmt.Sprint(req.Body), "err=", err)
+		hc.bb.Err("http   error: ", " url="+req.URL.String(), "header="+fmt.Sprint(req.Header), "body="+fmt.Sprint(req.Body), "err=", err)
 
 		return "", err
 	}
-	hc.bb.Log(  "http  result:","url="+req.URL.String(), "header="+fmt.Sprint(req.Header),"body="+fmt.Sprint(req.Body)," resp: "+string(body))
+	hc.bb.Log("http  result:", "url="+req.URL.String(), "header="+fmt.Sprint(req.Header), "body="+fmt.Sprint(req.Body), " resp: "+string(body))
 	return string(body), nil
 }
-
- 

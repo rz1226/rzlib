@@ -1,9 +1,12 @@
 package kits
 
+import "sync/atomic"
+
 type CounterKit struct {
 	data   *Counter
 	name   string
 	readme string //名称的注释
+	used   uint32 //是否已经使用，只有用过的才会show的时候显示出来 0 没有使用 1 使用
 }
 
 func NewCounterKit(name, readme string) *CounterKit {
@@ -11,10 +14,24 @@ func NewCounterKit(name, readme string) *CounterKit {
 	c.name = name
 	c.data = NewCounter()
 	c.readme = readme
+	c.used = 0
 	return c
+}
+func (c *CounterKit) isUsed() bool {
+	v := atomic.LoadUint32(&c.used)
+	if v == 0 {
+		return false
+	}
+	return true
+}
+func (c *CounterKit) setUsed() {
+	atomic.StoreUint32(&c.used, 1)
 }
 
 func (c *CounterKit) Show() string {
+	if c.isUsed() == false {
+		return ""
+	}
 	str := ""
 	str += "\n----------------------\n计数器名称:" + c.name + " : \n计数器信息:" + c.readme + "\n"
 	str += c.Str()
@@ -24,11 +41,11 @@ func (c *CounterKit) Show() string {
 }
 
 func (c *CounterKit) Inc() {
-
+	c.setUsed()
 	c.data.Add(1)
 }
 func (c *CounterKit) IncBy(num int64) {
-
+	c.setUsed()
 	c.data.Add(num)
 }
 func (c *CounterKit) Get(name string) int64 {

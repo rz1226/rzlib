@@ -31,7 +31,7 @@ type TimerKit struct {
 	node   *timerKitNode
 	name   string
 	readme string //名称的注释
-
+	used   uint32
 }
 
 func NewTimerKit(name, readme string) *TimerKit {
@@ -40,10 +40,23 @@ func NewTimerKit(name, readme string) *TimerKit {
 	tk.readme = readme
 	tk.node = newTimerKitNode(name)
 	tk.name = name
+	tk.used = 0
 	return tk
 }
-
+func (tk *TimerKit) isUsed() bool {
+	v := atomic.LoadUint32(&tk.used)
+	if v == 0 {
+		return false
+	}
+	return true
+}
+func (tk *TimerKit) setUsed() {
+	atomic.StoreUint32(&tk.used, 1)
+}
 func (tk *TimerKit) Show() string {
+	if tk.isUsed() == false {
+		return ""
+	}
 	str := ""
 	str += "----------------------\n计时器名称:" + tk.name + "\n计时器说明:" + tk.readme + "\n"
 	str += tk.Info()
@@ -55,7 +68,7 @@ func (tk *TimerKit) Start(tickInfo string) *Tick {
 	return tk.node.start(tickInfo)
 }
 func (tk *TimerKit) End(tick *Tick) {
-
+	tk.setUsed()
 	if tick == nil {
 		return
 	}
@@ -72,8 +85,8 @@ func (tk *TimerKit) Info() string {
 	resStr += "count:" + strconv.FormatInt(timerKitNode.getCount(), 10) + "次\n"
 	resStr += "sum:" + strconv.FormatFloat(timerKitNode.getSum(), 'f', 6, 64) + "秒\n"
 	resStr += "avg:" + strconv.FormatFloat(timerKitNode.getAvg(), 'f', 6, 64) + "秒每次\n"
-	resStr += "高耗时记录: \n" + timerKitNode.showslow()
-	resStr += "最近记录: \n" + timerKitNode.showlast()
+	resStr += "-----\n高耗时记录: \n" + timerKitNode.showslow()
+	resStr += "-----\n最近记录: \n" + timerKitNode.showlast()
 	return resStr
 }
 
@@ -115,10 +128,10 @@ func (t *timerKitNode) end(tick *Tick) {
 	atomic.AddInt64(&t.count, 1)
 	atomic.AddInt64(&t.sum, du)
 	count := atomic.LoadInt64(&t.count)
-	t.last.PutContentsAndFormat("操作是:"+tick.info,"耗时秒是:" + fmt.Sprint(float64(du)/float64(time.Second)))
+	t.last.PutContentsAndFormat("操作是:"+tick.info, "耗时秒是:"+fmt.Sprint(float64(du)/float64(time.Second)))
 	sum := atomic.LoadInt64(&t.sum)
 	if du > sLOWNANO+sum/(count+1) {
-		t.slowest.PutContentsAndFormat("操作是:"+tick.info,"耗时秒是:" + fmt.Sprint(float64(du)/float64(time.Second)))
+		t.slowest.PutContentsAndFormat("操作是:"+tick.info, "耗时秒是:"+fmt.Sprint(float64(du)/float64(time.Second)))
 	}
 }
 func (t *timerKitNode) getCount() int64 {
@@ -138,8 +151,8 @@ func (t *timerKitNode) getAvg() float64 {
 	return float64(avg) / float64(time.Second)
 }
 func (t *timerKitNode) showslow() string {
-	return t.slowest.FetchContents(30)
+	return t.slowest.FetchContents(10)
 }
 func (t *timerKitNode) showlast() string {
-	return t.last.FetchContents(30)
+	return t.last.FetchContents(10)
 }

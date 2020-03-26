@@ -161,6 +161,7 @@ func (bb *BlackBoradKit) Err(logs ...interface{}) {
 		fmt.Print(str)
 	}
 }
+
 /*---------------------------timer---------------------------------*/
 func (bb *BlackBoradKit) Start(tickInfo string) *kits.Tick {
 	return bb.timerKit.Start(tickInfo)

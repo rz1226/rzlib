@@ -8,21 +8,17 @@ import (
 
 var client *httpkit.HttpClient
 
-func init(){
+func init() {
 
-	client = httpkit.NewHttpClient(1,100)
+	client = httpkit.NewHttpClient(1, 100)
 	blackboardkit.StartMonitor("9090")
 }
 
-func main(){
-	for i:=0;i<100 ;i++  {
+func main() {
+	for i := 0; i < 100; i++ {
 		client.Get("http://www.baidu.com")
 	}
 
-
-	time.Sleep(time.Second*1000)
-
+	time.Sleep(time.Second * 1000)
 
 }
-
-
