@@ -32,8 +32,8 @@ func testx() {
 
 				//fmt.Println("闭包", a   )
 				//time.Sleep(time.Millisecond*1)
-				//panic(1)
-				return true
+				panic(1)
+				return false
 			}
 
 		}(i)

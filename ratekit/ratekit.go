@@ -112,7 +112,7 @@ func (rk *RateKit) asynTask() bool {
 type WorkerFactory struct {
 	workerList []*Worker                    //正在运行的worker集合
 	bb         *blackboardkit.BlackBoradKit //记录日志信息用的黑板
-	bbErr      *blackboardkit.BlackBoradKit //记录日志信息用的黑板
+
 }
 
 //第一个参数是worker工作的函数
@@ -128,7 +128,6 @@ func newFactory(f func() bool, size int) *WorkerFactory {
 	}
 
 	fac.bb = blackboardkit.NewBlockBorad("ratekit", "workerfactory", "worker工厂记录")
-	fac.bbErr = blackboardkit.NewBlockBorad("ratekit", "workerfactory_error", "worker工厂错误记录")
 
 	return fac
 }
@@ -164,7 +163,7 @@ func (w *Worker) setStop() {
 func (w *Worker) run() {
 	defer func() {
 		if co := recover(); co != nil {
-			w.factory.bbErr.Err("worker_panic", "worker 发生异常:", co)
+			w.factory.bb.Panic("worker_panic", "worker 发生异常:", co)
 			time.Sleep(time.Millisecond * time.Duration(20+getRandInt(300))) //如果挂了，等一点点时间再重启，防止无限挂跑死cpu
 			w.run()
 		}
@@ -180,7 +179,7 @@ func (w *Worker) run() {
 			}
 			if w.isRunning() == false {
 				//状态为停止，关闭worker
-				w.factory.bb.Log("关闭 worker")
+				w.factory.bb.Warn("关闭 worker")
 				return
 			}
 		}

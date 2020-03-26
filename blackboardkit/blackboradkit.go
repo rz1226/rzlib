@@ -103,7 +103,9 @@ func (a *allBB) showAll() string {
 
 type BlackBoradKit struct {
 	logKit           *kits.LogKit
+	logWarnKit       *kits.LogKit
 	logErrKit        *kits.LogKit
+	logPanicKit      *kits.LogKit
 	timerKit         *kits.TimerKit
 	counterKit       *kits.CounterKit
 	bbStartTime      string
@@ -135,7 +137,9 @@ func (bb *BlackBoradKit) SetNoPrintToConsole(result bool) {
 //初始化日志kit
 func (bb *BlackBoradKit) initLogKit() {
 	bb.logKit = kits.NewLogKit(bb.name+"_info", "Log记录："+bb.readme)
+	bb.logWarnKit = kits.NewLogKit(bb.name+"_warn", "warn记录："+bb.readme)
 	bb.logErrKit = kits.NewLogKit(bb.name+"_error", "Err记录："+bb.readme)
+	bb.logPanicKit = kits.NewLogKit(bb.name+"_panic", "致命错误记录："+bb.readme)
 }
 
 //初始化计数器kit
@@ -155,8 +159,20 @@ func (bb *BlackBoradKit) Log(logs ...interface{}) {
 		fmt.Print(str)
 	}
 }
+func (bb *BlackBoradKit) Warn(logs ...interface{}) {
+	str := bb.logWarnKit.PutContentsAndFormat(logs...)
+	if bb.noPrintToConsole == false {
+		fmt.Print(str)
+	}
+}
 func (bb *BlackBoradKit) Err(logs ...interface{}) {
 	str := bb.logErrKit.PutContentsAndFormat(logs...)
+	if bb.noPrintToConsole == false {
+		fmt.Print(str)
+	}
+}
+func (bb *BlackBoradKit) Panic(logs ...interface{}) {
+	str := bb.logPanicKit.PutContentsAndFormat(logs...)
 	if bb.noPrintToConsole == false {
 		fmt.Print(str)
 	}
@@ -188,7 +204,13 @@ func (bb *BlackBoradKit) show() string {
 	str += bb.logKit.Show()
 
 	str += "\n\n\n"
+	str += bb.logWarnKit.Show()
+
+	str += "\n\n\n"
 	str += bb.logErrKit.Show()
+
+	str += "\n\n\n"
+	str += bb.logPanicKit.Show()
 
 	str += "\n\n\n"
 	str += bb.counterKit.Show()
