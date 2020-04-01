@@ -7,18 +7,19 @@ import (
 	"github.com/karlseguin/ccache"
 	"time"
 )
-type CCache struct{
+
+type CCache struct {
 	c *ccache.Cache
 }
-func NewCCache(maxSize int ) *CCache{
+
+func NewCCache(maxSize int) *CCache {
 	cache := new(CCache)
-	count := uint32(maxSize/10 + 1 )
-	cache.c = ccache.New(ccache.Configure().MaxSize( int64(maxSize) ).ItemsToPrune(count))
+	count := uint32(maxSize/10 + 1)
+	cache.c = ccache.New(ccache.Configure().MaxSize(int64(maxSize)).ItemsToPrune(count))
 	return cache
 }
 
-
-func (cd Data)ToCCache(source *CCache , duration time.Duration ) error {
+func (cd Data) ToCCache(source *CCache, duration time.Duration) error {
 	if len(cd.key) == 0 {
 		return errors.New("no key for ccache")
 	}
@@ -26,9 +27,9 @@ func (cd Data)ToCCache(source *CCache , duration time.Duration ) error {
 	return nil
 }
 
-func (k DataKey) FetchFromCCache(source *CCache)( interface{}, error) {
-	key := string(k )
-	item := source.c.Get(key )
+func (k DataKey) FetchFromCCache(source *CCache) (interface{}, error) {
+	key := string(k)
+	item := source.c.Get(key)
 	if item != nil {
 		if item.TTL().Seconds() > 0 {
 			return item.Value(), nil

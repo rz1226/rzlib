@@ -17,21 +17,21 @@ type User struct{
 }
 */
 // business model
-type ChangeForInsert struct{
+type ChangeForInsert struct {
 	fieldName string
-	f  func(data interface{}) interface{}
+	f         func(data interface{}) interface{}
 }
-func NewChangeForInsert(fieldName string , f  func(data interface{}) interface{})*ChangeForInsert{
+
+func NewChangeForInsert(fieldName string, f func(data interface{}) interface{}) *ChangeForInsert {
 	c := new(ChangeForInsert)
 	c.fieldName = fieldName
 	c.f = f
 	return c
 }
 
-
 type BM struct {
-	v      interface{} //实际上是一个*struct, 或者*[]*struct
-	isMany bool
+	v                interface{} //实际上是一个*struct, 或者*[]*struct
+	isMany           bool
 	changeForInserts []*ChangeForInsert
 }
 
@@ -42,12 +42,13 @@ func NewBM(data interface{}) *BM {
 	}
 	bm := new(BM)
 	bm.v = data
-	bm.changeForInserts = make( []*ChangeForInsert, 0,2)
+	bm.changeForInserts = make([]*ChangeForInsert, 0, 2)
 	bm.isMany = isMany
 	return bm
 }
+
 //加入可能在生成 nsert语句的时候，要改变值的东西
-func (b *BM) ChangeForInsert (changeForInsert *ChangeForInsert) *BM{
+func (b *BM) ChangeForInsert(changeForInsert *ChangeForInsert) *BM {
 	b.changeForInserts = append(b.changeForInserts, changeForInsert)
 	return b
 }
@@ -70,7 +71,6 @@ func (b *BM) ToSqlUpdate(tableName string, updateFields map[string]int, conditio
 
 }
 
-
 //使用单个和多个条目
 // 第二个参数是, 用来改变生成的sql语句的值，例如有一个字段类型是datetime,值是空，就插不进去，改成nil对应数据库的NULL
 
@@ -82,8 +82,8 @@ func (b *BM) ToSqlInsert(tableName string) (*Sql, error) {
 		}
 		//是否设置了changeforInsert
 		if len(b.changeForInserts) > 0 {
-			for _, v := range b.changeForInserts{
-				l.Map(v.fieldName, v.f  )
+			for _, v := range b.changeForInserts {
+				l.Map(v.fieldName, v.f)
 			}
 		}
 
@@ -94,8 +94,8 @@ func (b *BM) ToSqlInsert(tableName string) (*Sql, error) {
 			return nil, err
 		}
 		if len(b.changeForInserts) > 0 {
-			for _, v := range b.changeForInserts{
-				lines.Map(v.fieldName, v.f  )
+			for _, v := range b.changeForInserts {
+				lines.Map(v.fieldName, v.f)
 			}
 		}
 		return lines.ToSqlInsert(tableName), nil

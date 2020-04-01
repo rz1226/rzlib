@@ -6,27 +6,4 @@
 以上设置好一个全局的变量来控制本项目中所有的相关常驻goroutine
 
 这是个任务，一般来说是个无限循环任务，不会主动退出。这个例子会退出，实际使用一般是无限循环
-
-func s(){
-	for i:=1;i<10000000;i++{
-		time.Sleep( time.Millisecond*1)
-		//fmt.Println("running2")
-		if i%40 == 0{
-			panic("some error oh no")
-			return
-
-		}
-	}
-}
-
-func main(){
-
-    //启动任务 1 名称  2 数量  3 函数名 4 panic是否重启
-    //注意：不建议动态的添加任务，应该是项目开始运行添加固定数量的goroutine。否则只能在测试环境使用这个库。
-    fmt.Println(coroutinekit.Start("正在 进行推送任务", 30, s , true ))
-
-    //查看信息
-    coroutinekit.Show()
-    //或者
-    coroutinekit.StartMonitor("9098")
-}
+见 example/coroutine

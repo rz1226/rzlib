@@ -9,16 +9,7 @@ func init(){
 }
 以上初始化一个全局的httpclient
 
-执行post
-url := "http://127.0.0.1:9030"
-var buf io.Reader
-buf = strings.NewReader("abc=sdfsdfsdfsdfsdf&t=234")
-str, err := client.Post(url, "application/x-www-form-urlencoded;charset=utf-8", buf )
-
-执行get
-url := "http://127.0.0.1:9030"
-str, err := client.Get(url )
-
+//见example/httpkit
 
 //启动监控
 blackboardkit.StartMonitor("9091" ) 

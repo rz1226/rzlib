@@ -13,27 +13,27 @@ import (
 //{field = name, auto : 1 , value = xx}, ...
 // 一个拍扁了的orm struct
 type Field struct {
-	BMField string     //bm struct字段名
-	Name   string      // 数据库字段名
-	IsAuto bool        //是否类似auto_increment, 或者create_time 不需要手动设置的数据
-	Value  interface{} //值
+	BMField string      //bm struct字段名
+	Name    string      // 数据库字段名
+	IsAuto  bool        //是否类似auto_increment, 或者create_time 不需要手动设置的数据
+	Value   interface{} //值
 }
 type Lines []Line
 
-func (l Line) Map(fieldName string, f func(interface{})interface{}  ) {
-	 for _, v := range l {
-	 	if v.BMField == fieldName{
-	 		v.Value = f(v.Value )
+func (l Line) Map(fieldName string, f func(interface{}) interface{}) {
+	for _, v := range l {
+		if v.BMField == fieldName {
+			v.Value = f(v.Value)
 		}
-	 }
+	}
 }
 
-func (l Lines) Map(fieldName string, f func(interface{})interface{} ) {
+func (l Lines) Map(fieldName string, f func(interface{}) interface{}) {
 	for _, v := range l {
 		field, err := v.GetField(fieldName)
 		if err == nil {
-			if field.BMField == fieldName{
-				field.Value = f(field.Value )
+			if field.BMField == fieldName {
+				field.Value = f(field.Value)
 			}
 		}
 	}

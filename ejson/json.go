@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-
 )
 
 type Ejson struct {
@@ -69,21 +68,21 @@ func (e *Ejson) sets() error {
 	e.exist_s = true
 	return nil
 }
+
 //和newejson的区别是会检查错误，性能稍低
-func NewEjsonWithCheck(j interface{}) ( *Ejson, error ){
-	json , err := NewEjson(j )
+func NewEjsonWithCheck(j interface{}) (*Ejson, error) {
+	json, err := NewEjson(j)
 	if err != nil {
 		return nil, err
 	}
-	if err := json.setj() ; err != nil {
+	if err := json.setj(); err != nil {
 		return nil, err
 	}
-	if err := json.sets();err != nil {
+	if err := json.sets(); err != nil {
 		return nil, err
 	}
 	return json, nil
 }
-
 
 func NewEjson(j interface{}) (*Ejson, error) {
 	e := Ejson{}
@@ -346,17 +345,17 @@ func (e *Ejson) MapGetFloat64(key string) (float64, error) {
 
 	v, ok := e.getj().(map[string]interface{})
 	if !ok {
-		return 0, errors.New("ejson:MapGetFloat64主体对象必须是map:" + key )
+		return 0, errors.New("ejson:MapGetFloat64主体对象必须是map:" + key)
 	}
 	find, ok := v[key]
 	if !ok {
-		return 0, errors.New("ejson:MapGetFloat64找不到index:" + key )
+		return 0, errors.New("ejson:MapGetFloat64找不到index:" + key)
 	}
 	num, ok := find.(float64)
 	if !ok {
 		numInt, ok := find.(int)
 		if !ok {
-			return 0, errors.New("ejson:MapGetFloat64找到的index不是float64或者int:" + key )
+			return 0, errors.New("ejson:MapGetFloat64找到的index不是float64或者int:" + key)
 		}
 		num = float64(numInt)
 	}
