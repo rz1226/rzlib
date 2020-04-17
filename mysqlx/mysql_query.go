@@ -61,6 +61,28 @@ func (r *QueryRes) Map(f func(map[string]interface{})) {
 		f(v)
 	}
 }
+//过滤掉一部分数据
+func (r *QueryRes) Erase(f func(map[string]interface{})bool )  *QueryRes{
+	newRes := make([]map[string]interface{},0,10)
+	for _, v := range r.res {
+		if f(v) != true {
+			newRes = append( newRes , v )
+		}
+	}
+	r.res = newRes
+	return r
+}
+//保留一部分数据
+func (r *QueryRes) Keep(f func(map[string]interface{})bool )  *QueryRes{
+	newRes := make([]map[string]interface{},0,10)
+	for _, v := range r.res {
+		if f(v) == true {
+			newRes = append( newRes , v )
+		}
+	}
+	r.res = newRes
+	return r
+}
 
 /********************************************************************/
 //执行exec   参数是*DB  or *DbTx
