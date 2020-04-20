@@ -49,7 +49,9 @@ func NewQueryRes(res []map[string]interface{}, err error) *QueryRes {
 	q.err = err
 	return q
 }
-
+func (r *QueryRes) Error() error {
+	return r.err
+}
 //还原为数组
 func (r *QueryRes) Data() []map[string]interface{} {
 	return ([]map[string]interface{})(r.res)
@@ -86,9 +88,9 @@ func (r *QueryRes) Keep(f func(map[string]interface{})bool )  *QueryRes{
 
 /********************************************************************/
 //执行exec   参数是*DB  or *DbTx
-func (s Sql) Query(source interface{}) *QueryRes {
+func (s Sql) Query(source interface{}) (*QueryRes,error) {
 	res, error := queryCommon(source, string(s.str), s.params)
-	return NewQueryRes(res, error)
+	return NewQueryRes(res, error), error
 }
 
 //统一处理事务内，和非事务内query

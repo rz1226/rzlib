@@ -25,7 +25,7 @@ func (s Sql) Query(source interface{}) *QueryRes {
 	return NewQueryRes(res, error)
 }
 */
-func (ss SqlStr) Query(source interface{}) *QueryRes {
+func (ss SqlStr) Query(source interface{}) (*QueryRes,error) {
 	sql := ss.AddParams()
 	return sql.Query(source)
 }
