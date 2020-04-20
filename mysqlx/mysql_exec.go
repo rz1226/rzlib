@@ -60,6 +60,9 @@ func (s Sql) Info() string {
 }
 
 func execCommon(source interface{}, sqlStr string, args []interface{}) (int64, error) {
+	if Conf.Log == true{
+		fmt.Println("running.... exec sql = ",sqlStr, "\n args=", args )
+	}
 	p, ok := source.(*DB)
 	if ok {
 		result, err := p.realPool.Exec(sqlStr, args...)

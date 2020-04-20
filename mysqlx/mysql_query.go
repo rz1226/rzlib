@@ -3,6 +3,7 @@ package mysqlx
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"reflect"
 )
 
@@ -95,6 +96,10 @@ func (s Sql) Query(source interface{}) (*QueryRes,error) {
 
 //统一处理事务内，和非事务内query
 func queryCommon(source interface{}, sqlStr string, args []interface{}) ([]map[string]interface{}, error) {
+	if Conf.Log == true{
+		fmt.Println("running....query sql = ",sqlStr, "\n args=", args )
+	}
+
 	p, ok := source.(*DB)
 	if ok {
 		rows, err := p.realPool.Query(sqlStr, args...)
