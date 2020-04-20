@@ -122,7 +122,7 @@ func queryCommon(source interface{}, sqlStr string, args []interface{}) ([]map[s
 
 // scan的行为null 对应nil  数字对数字  其他对字符串 ,所以所有的字段数据类型归结为简单的几种。这可能不能处理非常规情况。
 //联表查询，如果两个表中有同名字段的时候，不会报错，会忠实的输出数据
-//另外如果数据库里是null，怎会被转换成0，空字符串，可能会影响业务逻辑
+//另外如果数据库里是null，怎会被转换成0，空字符串，可能会影响业务逻辑，需要开发者自己注意
 func queryResFromRows(rows *sql.Rows) ([]map[string]interface{}, error) {
 	defer rows.Close()
 	res := make([]map[string]interface{}, 0, 100)

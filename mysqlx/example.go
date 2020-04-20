@@ -1,6 +1,14 @@
 package mysqlx
 
 /**
+type Tai struct {
+	Id          int64   `orm:"id" auto:"1""`
+	Name        string  `orm:"name"`
+	Age         int64   `orm:"age"`
+	Weight      float64 `orm:"weight"`
+	Create_time string  `orm:"create_time" auto:"1"`
+	Some        string
+}
 
 
 
