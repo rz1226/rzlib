@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"strconv"
+	"strings"
 )
 
 //多个，把queryRes里的数据转化成*[]*struct
@@ -45,7 +46,13 @@ func queryRes2Struct(sourceData map[string]interface{}, dstStruct interface{}, f
 
 //第二个参数是&[]*SomeStruct
 func queryRes2StructBatch(sourceDatas []map[string]interface{}, dstStructs interface{}, f func(map[string]interface{})) error {
+
 	strusRV := reflect.Indirect(reflect.ValueOf(dstStructs))
+	if strings.Contains(fmt.Sprint(strusRV), "<invalid reflect.Value>"){
+		return errors.New("invalid reflect.Value , 应该把struct集合的类型声明为[]*SomeStruct,然后调用这里的时候加&")
+	}
+
+
 	elemRT := strusRV.Type().Elem()
 	for _, v := range sourceDatas {
 		eleData := reflect.New(elemRT.Elem()).Interface()
