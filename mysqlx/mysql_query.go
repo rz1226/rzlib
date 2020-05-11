@@ -53,6 +53,7 @@ func NewQueryRes(res []map[string]interface{}, err error) *QueryRes {
 func (r *QueryRes) Error() error {
 	return r.err
 }
+
 //还原为数组
 func (r *QueryRes) Data() []map[string]interface{} {
 	return ([]map[string]interface{})(r.res)
@@ -64,23 +65,25 @@ func (r *QueryRes) Map(f func(map[string]interface{})) {
 		f(v)
 	}
 }
+
 //过滤掉一部分数据
-func (r *QueryRes) Erase(f func(map[string]interface{})bool )  *QueryRes{
-	newRes := make([]map[string]interface{},0,10)
+func (r *QueryRes) Erase(f func(map[string]interface{}) bool) *QueryRes {
+	newRes := make([]map[string]interface{}, 0, 10)
 	for _, v := range r.res {
 		if f(v) != true {
-			newRes = append( newRes , v )
+			newRes = append(newRes, v)
 		}
 	}
 	r.res = newRes
 	return r
 }
+
 //保留一部分数据
-func (r *QueryRes) Keep(f func(map[string]interface{})bool )  *QueryRes{
-	newRes := make([]map[string]interface{},0,10)
+func (r *QueryRes) Keep(f func(map[string]interface{}) bool) *QueryRes {
+	newRes := make([]map[string]interface{}, 0, 10)
 	for _, v := range r.res {
 		if f(v) == true {
-			newRes = append( newRes , v )
+			newRes = append(newRes, v)
 		}
 	}
 	r.res = newRes
@@ -89,15 +92,15 @@ func (r *QueryRes) Keep(f func(map[string]interface{})bool )  *QueryRes{
 
 /********************************************************************/
 //执行exec   参数是*DB  or *DbTx
-func (s Sql) Query(source interface{}) (*QueryRes,error) {
+func (s Sql) Query(source interface{}) (*QueryRes, error) {
 	res, error := queryCommon(source, string(s.str), s.params)
 	return NewQueryRes(res, error), error
 }
 
 //统一处理事务内，和非事务内query
 func queryCommon(source interface{}, sqlStr string, args []interface{}) ([]map[string]interface{}, error) {
-	if Conf.Log == true{
-		fmt.Println("running....query sql = ",sqlStr, "\n args=", args )
+	if Conf.Log == true {
+		fmt.Println("running....query sql = ", sqlStr, "\n args=", args)
 	}
 
 	p, ok := source.(*DB)

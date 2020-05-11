@@ -12,7 +12,7 @@ type Config struct {
 	//第一个参数包含了所有的tag ,可以通过 tags.Get(name)获取某个tag
 	//影响业务模型数据转化为Line  Lines
 	FuncAuto func(tags reflect.StructTag) bool
-	Log  bool //是否打印sql执行情况到终端
+	Log      bool //是否打印sql执行情况到终端
 }
 
 func init() {

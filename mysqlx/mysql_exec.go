@@ -25,7 +25,7 @@ func (s Sql) Query(source interface{}) *QueryRes {
 	return NewQueryRes(res, error)
 }
 */
-func (ss SqlStr) Query(source interface{}) (*QueryRes,error) {
+func (ss SqlStr) Query(source interface{}) (*QueryRes, error) {
 	sql := ss.AddParams()
 	return sql.Query(source)
 }
@@ -60,8 +60,8 @@ func (s Sql) Info() string {
 }
 
 func execCommon(source interface{}, sqlStr string, args []interface{}) (int64, error) {
-	if Conf.Log == true{
-		fmt.Println("running.... exec sql = ",sqlStr, "\n args=", args )
+	if Conf.Log == true {
+		fmt.Println("running.... exec sql = ", sqlStr, "\n args=", args)
 	}
 	p, ok := source.(*DB)
 	if ok {

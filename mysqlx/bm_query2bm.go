@@ -8,7 +8,72 @@ import (
 	"strings"
 )
 
-//多个，把queryRes里的数据转化成*[]*struct
+// 这种queryRes通常只有一个字段，取出string
+func (q *QueryRes) ToString() (string, error) {
+	if q.err != nil {
+		return "", q.err
+	}
+	data := q.Data()
+	if len(data) == 0 {
+		return "", errors.New("empty value")
+	}
+	firstData := data[0]
+	for _, v := range firstData {
+		if vData, ok := v.(string); ok {
+			return vData, nil
+		} else {
+			return fmt.Sprint(vData), nil
+		}
+	}
+	return "", errors.New("其他错误")
+}
+func (q *QueryRes) ToInt64() (int64, error) {
+	if q.err != nil {
+		return 0, q.err
+	}
+	data := q.Data()
+	if len(data) == 0 {
+		return 0, errors.New("empty value")
+	}
+	firstData := data[0]
+	for k, v := range firstData {
+		//fmt.Println(reflect.TypeOf(v))
+		if vData, ok := v.(int64); ok {
+			return vData, nil
+		} else {
+			valueInt64, err := strconv.ParseInt(fmt.Sprint(v), 10, 64)
+			if err != nil {
+				return 0, errors.New("ToInt64 error:数据库里的字段不是int64类型" + k)
+			}
+			return valueInt64, nil
+		}
+	}
+	return 0, errors.New("其他错误")
+}
+func (q *QueryRes) ToFloat64() (float64, error) {
+	if q.err != nil {
+		return 0, q.err
+	}
+	data := q.Data()
+	if len(data) == 0 {
+		return 0, errors.New("empty value")
+	}
+	firstData := data[0]
+	for _, v := range firstData {
+		if vData, ok := v.(float64); ok {
+			return vData, nil
+		} else {
+			valueF64, err := strconv.ParseFloat(fmt.Sprint(v), 64)
+			if err != nil {
+				return 0, errors.New("ToFloat64 error:数据库里的字段不是float64类型")
+			}
+			return valueF64, nil
+		}
+	}
+	return 0, errors.New("其他错误")
+}
+
+//多个，把queryRes里的数据转化成*[]*struct  或者  *struct ，适应两种格式，单个和多个
 func (q *QueryRes) ToStruct(dstStructs interface{}) error {
 	if q.err != nil {
 		return q.err
@@ -48,10 +113,9 @@ func queryRes2Struct(sourceData map[string]interface{}, dstStruct interface{}, f
 func queryRes2StructBatch(sourceDatas []map[string]interface{}, dstStructs interface{}, f func(map[string]interface{})) error {
 
 	strusRV := reflect.Indirect(reflect.ValueOf(dstStructs))
-	if strings.Contains(fmt.Sprint(strusRV), "<invalid reflect.Value>"){
+	if strings.Contains(fmt.Sprint(strusRV), "<invalid reflect.Value>") {
 		return errors.New("invalid reflect.Value , 应该把struct集合的类型声明为[]*SomeStruct,然后调用这里的时候加&")
 	}
-
 
 	elemRT := strusRV.Type().Elem()
 	for _, v := range sourceDatas {
@@ -121,9 +185,9 @@ func structFromQueryRes(sourceData map[string]interface{}, dstStruct interface{}
 				valueF64, ok := valueFromMap.(float64)
 				if !ok {
 					if valueStr, ok := valueFromMap.(string); ok {
-						valueInt64, err := strconv.ParseFloat(valueStr, 64)
+						valueF64, err := strconv.ParseFloat(valueStr, 64)
 						if err == nil {
-							v.Elem().Field(i).Set(reflect.ValueOf(valueInt64))
+							v.Elem().Field(i).Set(reflect.ValueOf(valueF64))
 						}
 					} else {
 						return errors.New("field " + key + " can not store as float ,is " + fmt.Sprint(reflect.TypeOf(valueFromMap)))
