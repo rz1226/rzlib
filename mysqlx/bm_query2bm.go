@@ -8,69 +8,100 @@ import (
 	"strings"
 )
 
-// 这种queryRes通常只有一个字段，取出string
-func (q *QueryRes) ToString() (string, error) {
+
+//取第一条数据的某个字段  如果field为空，取第一个
+func (q *QueryRes) toInterfaceByField(field string) (interface{}, error) {
 	if q.err != nil {
-		return "", q.err
+		return nil, q.err
 	}
 	data := q.Data()
 	if len(data) == 0 {
-		return "", errors.New("empty value")
-	}
-	firstData := data[0]
-	for _, v := range firstData {
-		if vData, ok := v.(string); ok {
-			return vData, nil
-		} else {
-			return fmt.Sprint(vData), nil
-		}
-	}
-	return "", errors.New("其他错误")
-}
-func (q *QueryRes) ToInt64() (int64, error) {
-	if q.err != nil {
-		return 0, q.err
-	}
-	data := q.Data()
-	if len(data) == 0 {
-		return 0, errors.New("empty value")
+		return nil, errors.New("empty value")
 	}
 	firstData := data[0]
 	for k, v := range firstData {
-		//fmt.Println(reflect.TypeOf(v))
-		if vData, ok := v.(int64); ok {
-			return vData, nil
-		} else {
-			valueInt64, err := strconv.ParseInt(fmt.Sprint(v), 10, 64)
-			if err != nil {
-				return 0, errors.New("ToInt64 error:数据库里的字段不是int64类型" + k)
+		if field == ""{
+			return v,nil
+		}else{
+			if k == field{
+				return v, nil
 			}
-			return valueInt64, nil
 		}
 	}
-	return 0, errors.New("其他错误")
+	return nil, errors.New("can not find value")
+}
+
+
+// 这种queryRes通常只有一个字段，取出string
+func (q *QueryRes) ToString() (string, error) {
+	value, err := q.toInterfaceByField("")
+	if err != nil {
+		return "", err
+	}
+	if vData, ok := value.(string); ok {
+		return vData, nil
+	} else {
+		return fmt.Sprint(vData), nil
+	}
+}
+
+func (q *QueryRes) ToInt64() (int64, error) {
+	value, err := q.toInterfaceByField("")
+	if err != nil {
+		return 0, err
+	}
+	valueInt64, err := strconv.ParseInt(fmt.Sprint(value), 10, 64)
+	if err != nil {
+		return 0, errors.New("ToInt64 error:数据库里的字段不是int64类型"  )
+	}
+	return valueInt64, nil
+
 }
 func (q *QueryRes) ToFloat64() (float64, error) {
-	if q.err != nil {
-		return 0, q.err
+	value, err := q.toInterfaceByField("")
+	if err != nil {
+		return 0, err
 	}
-	data := q.Data()
-	if len(data) == 0 {
-		return 0, errors.New("empty value")
+	valueF64, err := strconv.ParseFloat(fmt.Sprint(value), 64)
+	if err != nil {
+		return 0, errors.New("ToFloat64 error:数据库里的字段不是float64类型")
 	}
-	firstData := data[0]
-	for _, v := range firstData {
-		if vData, ok := v.(float64); ok {
-			return vData, nil
-		} else {
-			valueF64, err := strconv.ParseFloat(fmt.Sprint(v), 64)
-			if err != nil {
-				return 0, errors.New("ToFloat64 error:数据库里的字段不是float64类型")
-			}
-			return valueF64, nil
-		}
+	return valueF64, nil
+}
+func (q *QueryRes) ToStringByField(field string ) (string, error) {
+	value, err := q.toInterfaceByField(field)
+	if err != nil {
+		return "", err
 	}
-	return 0, errors.New("其他错误")
+	if vData, ok := value.(string); ok {
+		return vData, nil
+	} else {
+		return fmt.Sprint(vData), nil
+	}
+}
+
+func (q *QueryRes) ToInt64ByField(field string )  (int64, error) {
+	value, err := q.toInterfaceByField(field)
+	if err != nil {
+		return 0, err
+	}
+	valueInt64, err := strconv.ParseInt(fmt.Sprint(value), 10, 64)
+	if err != nil {
+		return 0, errors.New("ToInt64 error:数据库里的字段不是int64类型"  )
+	}
+	return valueInt64, nil
+
+}
+func (q *QueryRes) ToFloat64ByField(field string )  (float64, error) {
+	value, err := q.toInterfaceByField(field)
+	if err != nil {
+		return 0, err
+	}
+	valueF64, err := strconv.ParseFloat(fmt.Sprint(value), 64)
+	if err != nil {
+		return 0, errors.New("ToFloat64 error:数据库里的字段不是float64类型")
+	}
+	return valueF64, nil
 }
 
 //多个，把queryRes里的数据转化成*[]*struct  或者  *struct ，适应两种格式，单个和多个
@@ -185,6 +216,7 @@ func structFromQueryRes(sourceData map[string]interface{}, dstStruct interface{}
 				valueF64, ok := valueFromMap.(float64)
 				if !ok {
 					if valueStr, ok := valueFromMap.(string); ok {
+						//decimal在这里可以转化为f64
 						valueF64, err := strconv.ParseFloat(valueStr, 64)
 						if err == nil {
 							v.Elem().Field(i).Set(reflect.ValueOf(valueF64))

@@ -23,7 +23,7 @@ type TableInfo struct {
 //辅助根据表结构生成 bm
 
 func GetBmStrFromTable(dbKit *DB, dbName string, tableName string) string {
-	tableInfos := GetTableInfos(dbKit, dbName, tableName)
+	tableInfos := getTableInfos(dbKit, dbName, tableName)
 
 	str := ""
 	for _, v := range tableInfos {
@@ -34,10 +34,32 @@ func GetBmStrFromTable(dbKit *DB, dbName string, tableName string) string {
 		str += "\n"
 	}
 	//fmt.Println(str )
+	str += "\n\n\n\n 建表语句=\n"
+	str += getTableCreateSql(dbKit,dbName+"."+tableName)
 	return str
 }
 
-func GetTableInfos(dbKit *DB, dbName string, tableName string) []*TableInfo {
+
+
+func getTableCreateSql(dbKit *DB,   tableName string) string {
+	sql := SqlStr("show create table  "+ tableName)
+ 	res, err := sql.Query( dbKit )
+
+ 	if err != nil {
+ 		fmt.Println("getTableCreateSql err:",err )
+ 		return ""
+	}
+	str, err := res.ToStringByField("Create Table")
+
+	if err != nil {
+		fmt.Println("getTableCreateSql err:",err )
+		return ""
+	}
+	return str
+}
+
+
+func getTableInfos(dbKit *DB, dbName string, tableName string) []*TableInfo {
 	sql := SqlStr("SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE,  COLUMN_COMMENT, EXTRA FROM INFORMATION_SCHEMA.COLUMNS where TABLE_SCHEMA = ? AND table_name = ? order by ordinal_position asc").AddParams(dbName, tableName)
 
 	res, err := sql.Query(dbKit)
@@ -63,9 +85,9 @@ func GetTableInfos(dbKit *DB, dbName string, tableName string) []*TableInfo {
 		switch strings.ToUpper(v.DATA_TYPE) {
 		case "INT", "BIGINT", "TINYINT", "MEDIUMINT":
 			dataType = "int64"
-		case "FLOAT", "DOUBLE":
+		case "FLOAT", "DOUBLE", "DECIMAL":
 			dataType = "float64"
-		case "CHAR", "VARCHAR", "TIME", "TEXT", "DECIMAL", "BLOB", "GEOMETRY", "BIT", "DATETIME", "DATE", "TIMESTAMP":
+		case "CHAR", "VARCHAR", "TIME", "TEXT", "BLOB", "GEOMETRY", "BIT", "DATETIME", "DATE", "TIMESTAMP":
 			dataType = "string"
 		default:
 			dataType = v.DATA_TYPE
