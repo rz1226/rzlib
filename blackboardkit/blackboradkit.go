@@ -8,6 +8,7 @@ import (
 	"os"
 	"reflect"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
@@ -226,9 +227,11 @@ func httpShowAll(w http.ResponseWriter, r *http.Request) {
 	str := ShowAllBBs()
 	fmt.Fprintln(w, str)
 }
-
+var StartedMonitor int32 = 0
 func StartMonitor(port string) {
-	go serverkit.NewSimpleHttpServer().Add("/", httpShowAll).Start(port)
+	if atomic.CompareAndSwapInt32(&StartedMonitor,0,1) {
+		go serverkit.NewSimpleHttpServer().Add("/", httpShowAll).Start(port)
+	}
 }
 
 /**

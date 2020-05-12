@@ -2,9 +2,9 @@ package coroutinekit
 
 import (
 	"fmt"
+	"github.com/rz1226/rzlib/serverkit"
 	"os"
 
-	"github.com/rz1226/rzlib/serverkit"
 	"net/http"
 	"runtime/debug"
 	"strconv"
@@ -277,8 +277,12 @@ func (r *Routine) show() (string, int, int, int, int, int) {
 }
 
 /**********************************************监控***************************************************/
+var StartedMonitor int32 = 0
 func StartMonitor(port string) {
-	go serverkit.NewSimpleHttpServer().Add("/", httpShowAll).Start(port)
+	if atomic.CompareAndSwapInt32(&StartedMonitor,0,1) {
+		go serverkit.NewSimpleHttpServer().Add("/", httpShowAll).Start(port)
+	}
+
 }
 
 func httpShowAll(w http.ResponseWriter, r *http.Request) {
