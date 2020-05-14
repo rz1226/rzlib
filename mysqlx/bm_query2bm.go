@@ -233,7 +233,13 @@ func structFromQueryRes(sourceData map[string]interface{}, dstStruct interface{}
 				valueString, ok := valueFromMap.(string)
 				if !ok {
 					//如果不是string类型，就强制转化
-					valueString = fmt.Sprint(valueFromMap)
+					//处理nil, 当用不是本库从数据库生成的数据转化的时候，可能有nil的问题，
+					if valueFromMap == nil {
+						valueString = ""
+					}else{
+						valueString = fmt.Sprint(valueFromMap)
+					}
+
 				}
 				v.Elem().Field(i).Set(reflect.ValueOf(valueString))
 			default:
