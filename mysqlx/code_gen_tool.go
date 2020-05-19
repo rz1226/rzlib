@@ -20,47 +20,43 @@ type TableInfo struct {
 	Comment  string
 }
 
-//辅助根据表结构生成 bm
+// 辅助根据表结构生成 bm
 
-func GetBmStrFromTable(dbKit *DB, dbName string, tableName string) string {
+func GetBmStrFromTable(dbKit *DB, dbName, tableName string) string {
 	tableInfos := getTableInfos(dbKit, dbName, tableName)
 
 	str := ""
 	for _, v := range tableInfos {
 		str += pad(v.Field, 30) + " "
 		str += pad(v.DataType, 12) + " "
-		str += pad(v.Tag, 20) + " //" + v.Comment
+		str += pad(v.Tag, 20) + " // " + v.Comment
 
 		str += "\n"
 	}
-	//fmt.Println(str )
 	str += "\n\n\n\n 建表语句=\n"
-	str += getTableCreateSql(dbKit,dbName+"."+tableName)
+	str += getTableCreateSql(dbKit, dbName+"."+tableName)
 	return str
 }
 
+func getTableCreateSql(dbKit *DB, tableName string) string {
+	sql := SQLStr("show create table  " + tableName)
+	res, err := sql.Query(dbKit)
 
-
-func getTableCreateSql(dbKit *DB,   tableName string) string {
-	sql := SqlStr("show create table  "+ tableName)
- 	res, err := sql.Query( dbKit )
-
- 	if err != nil {
- 		fmt.Println("getTableCreateSql err:",err )
- 		return ""
+	if err != nil {
+		fmt.Println("getTableCreateSql err:", err)
+		return ""
 	}
 	str, err := res.ToStringByField("Create Table")
 
 	if err != nil {
-		fmt.Println("getTableCreateSql err:",err )
+		fmt.Println("getTableCreateSql err:", err)
 		return ""
 	}
 	return str
 }
 
-
-func getTableInfos(dbKit *DB, dbName string, tableName string) []*TableInfo {
-	sql := SqlStr("SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE,  COLUMN_COMMENT, EXTRA FROM INFORMATION_SCHEMA.COLUMNS where TABLE_SCHEMA = ? AND table_name = ? order by ordinal_position asc").AddParams(dbName, tableName)
+func getTableInfos(dbKit *DB, dbName, tableName string) []*TableInfo {
+	sql := SQLStr("SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE,  COLUMN_COMMENT, EXTRA FROM INFORMATION_SCHEMA.COLUMNS where TABLE_SCHEMA = ? AND table_name = ? order by ordinal_position asc").AddParams(dbName, tableName)
 
 	res, err := sql.Query(dbKit)
 	if err != nil {
@@ -101,10 +97,10 @@ func getTableInfos(dbKit *DB, dbName string, tableName string) []*TableInfo {
 		strTag += "`"
 		tableInfo.Tag = strTag
 		tableInfo.Comment = v.COLUMN_COMMENT
-		//fmt.Println("数据类型： ",v.DATA_TYPE)
-		//fmt.Println("是否为空： ",v.IS_NULLABLE)
-		//fmt.Println("字段注释： ",v.COLUMN_COMMENT)
-		//fmt.Println("字段额外： ",v.EXTRA)
+		// fmt.Println("数据类型： ",v.DATA_TYPE)
+		// fmt.Println("是否为空： ",v.IS_NULLABLE)
+		// fmt.Println("字段注释： ",v.COLUMN_COMMENT)
+		// fmt.Println("字段额外： ",v.EXTRA)
 		tableInfos = append(tableInfos, tableInfo)
 	}
 	return tableInfos

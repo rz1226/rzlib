@@ -5,8 +5,8 @@ import "sync/atomic"
 type CounterKit struct {
 	data   *Counter
 	name   string
-	readme string //名称的注释
-	used   uint32 //是否已经使用，只有用过的才会show的时候显示出来 0 没有使用 1 使用
+	readme string //  名称的注释
+	used   uint32 //  是否已经使用，只有用过的才会show的时候显示出来 0 没有使用 1 使用
 }
 
 func NewCounterKit(name, readme string) *CounterKit {
@@ -19,17 +19,14 @@ func NewCounterKit(name, readme string) *CounterKit {
 }
 func (c *CounterKit) isUsed() bool {
 	v := atomic.LoadUint32(&c.used)
-	if v == 0 {
-		return false
-	}
-	return true
+	return v != 0
 }
 func (c *CounterKit) setUsed() {
 	atomic.StoreUint32(&c.used, 1)
 }
 
 func (c *CounterKit) Show() string {
-	if c.isUsed() == false {
+	if !c.isUsed() {
 		return ""
 	}
 	str := ""

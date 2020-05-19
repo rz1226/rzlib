@@ -4,11 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
-	//"reflect"
 )
 
-//比较是否相等， 字符串和数字
-func compareString(a, b interface{}) bool {
+//  比较是否相等， 字符串和数字
+func CompareString(a, b interface{}) bool {
 	v1, err := ConvertToString(a)
 	if err != nil {
 		return false
@@ -42,13 +41,12 @@ func ConvertToString(input interface{}) (string, error) {
 	case byte:
 		return string(val), nil
 	case bool:
-		if val == true {
+		if val {
 			return "true", nil
-		} else {
-			return "false", nil
 		}
+		return "false", nil
+
 	default:
 		return "", errors.New("convert to string error")
 	}
-
 }

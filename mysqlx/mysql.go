@@ -1,5 +1,5 @@
 package mysqlx
 
 import (
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql" // 载入mysql
 )

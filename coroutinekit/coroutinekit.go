@@ -1,10 +1,9 @@
 package coroutinekit
 
 import (
+	"errors"
 	"fmt"
 	"github.com/rz1226/rzlib/serverkit"
-	"os"
-
 	"net/http"
 	"runtime/debug"
 	"strconv"
@@ -24,19 +23,19 @@ m := NewCoroutineKit()
 m.Start(  "name", num, f(), panicRestart )
 
 
-//如何知道协程退出，把函数包起来
+// 如何知道协程退出，把函数包起来
 func x(){
 	f()
-	//检测退出
+	// 检测退出
 }
 还有要检测panic，如果panic可能也会退出
 
 */
-const MAX_NUM = 100
-const STATUS_INIT = 0
-const STATUS_RUN = 1
-const STATUS_OUT = 2
-const STATUS_PANIC = 3
+const MAXNUM = 100
+const STATUSINIT = 0
+const STATUSRUN = 1
+const STATUSOUT = 2
+const STATUSPANIC = 3
 
 var defaultco *CoroutineKit
 
@@ -52,8 +51,8 @@ func Show() string {
 
 type CoroutineKit struct {
 	mu        *sync.Mutex
-	nodes     []*Node          //每一组相同的goroutine占用一个node  主要作用可以按照启动的顺序展示监控信息
-	nodeNames map[string]*Node //保存所有名称，用来去重
+	nodes     []*Node          // 每一组相同的goroutine占用一个node  主要作用可以按照启动的顺序展示监控信息
+	nodeNames map[string]*Node // 保存所有名称，用来去重
 
 }
 
@@ -65,22 +64,21 @@ func newCoroutineKit() *CoroutineKit {
 	return ck
 }
 
-//加入goroutine，1 名称，不要重复，重复会报错，2 启动多少个goroutine 3 执行函数  4 遇到panic后是否要重新启动
-func (ck *CoroutineKit) start(name string, num int, f func(), panicRestart bool) {
+// 加入goroutine，1 名称，不要重复，重复会报错，2 启动多少个goroutine 3 执行函数  4 遇到panic后是否要重新启动
+func (ck *CoroutineKit) start(name string, num int, f func(), panicRestart bool) error {
 	ck.mu.Lock()
 	defer ck.mu.Unlock()
 	name = strings.TrimSpace(name)
-	//检查是否有重复名称
+	// 检查是否有重复名称
 	_, ok := ck.nodeNames[name]
 	if ok {
-		fmt.Println("coroutinekit start error :duplicated name")
-		os.Exit(1)
-
+		return errors.New("coroutinekit start error :duplicated name")
 	}
 	node := newNode(ck, name, num, f, panicRestart)
 	ck.nodes = append(ck.nodes, node)
 	ck.nodeNames[name] = node
-	node.start() //启动
+	node.start() // 启动
+	return nil
 
 }
 
@@ -96,7 +94,7 @@ func (ck *CoroutineKit) showAll() string {
 }
 
 type Node struct {
-	name         string //coroutine名字, 如果没有名字可以填写""
+	name         string // coroutine名字, 如果没有名字可以填写""
 	runnings     []*Routine
 	f            func()
 	panicRestart bool
@@ -108,8 +106,8 @@ func newNode(father *CoroutineKit, name string, num int, f func(), panicRestart 
 	if num <= 0 {
 		num = 1
 	}
-	if num > MAX_NUM {
-		num = MAX_NUM
+	if num > MAXNUM {
+		num = MAXNUM
 	}
 	n := &Node{}
 	n.name = name
@@ -117,14 +115,14 @@ func newNode(father *CoroutineKit, name string, num int, f func(), panicRestart 
 	n.panicRestart = panicRestart
 	n.father = father
 	n.mu = &sync.Mutex{}
-	n.runnings = make([]*Routine, num, num)
+	n.runnings = make([]*Routine, num)
 	for i := 0; i < num; i++ {
 		p := &Routine{}
 		p.name = name
 		p.startTime = ""
 		p.endTime = ""
 		p.panicTime = ""
-		p.status = STATUS_INIT
+		p.status = STATUSINIT
 		p.panicTimes = 0
 		p.mu = &sync.Mutex{}
 		p.lastPanicInfo = ""
@@ -179,52 +177,54 @@ func (n *Node) startOne(goroutineNo int) {
 	newf := func(no int) {
 		defer func() {
 			if co := recover(); co != nil {
-				//检查panic
+				// 检查panic
 				str := fmt.Sprintln(co)
 				strStackInfo := GetPrintStack()
 				n.setPanic(no, str+strStackInfo)
 			}
 		}()
-		//开始运行
+		// 开始运行
 		n.setRun(no)
 		n.f()
-		//检测退出
+		// 检测退出
 		n.setOut(no)
 	}
 	go newf(goroutineNo)
 }
 
-//发生panic的时候
+const PANICSLEEPMILLTIME = 100
+
+// 发生panic的时候
 func (n *Node) setPanic(no int, info string) {
 	p := n.runnings[no]
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	atomic.AddUint64(&p.panicTimes, 1) //原子操作貌似是没有必要的
+	atomic.AddUint64(&p.panicTimes, 1) // 原子操作貌似是没有必要的
 	p.lastPanicInfo = info
-	p.status = STATUS_PANIC
+	p.status = STATUSPANIC
 	p.panicTime = time.Now().Format("2006-01-02 15:04:05")
-	if n.panicRestart == true {
-		time.Sleep(time.Millisecond * 100)
+	if n.panicRestart {
+		time.Sleep(time.Millisecond * PANICSLEEPMILLTIME)
 		n.startOne(no)
 	}
 
 }
 
-//正常退出
+// 正常退出
 func (n *Node) setOut(no int) {
 	p := n.runnings[no]
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.status = STATUS_OUT
+	p.status = STATUSOUT
 	p.endTime = time.Now().Format("2006-01-02 15:04:05")
 }
 
-//开始运行
+// 开始运行
 func (n *Node) setRun(no int) {
 	p := n.runnings[no]
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	p.status = STATUS_RUN
+	p.status = STATUSRUN
 	p.startTime = time.Now().Format("2006-01-02 15:04:05")
 	p.endTime = ""
 }
@@ -235,13 +235,13 @@ type Routine struct {
 	startTime     string
 	endTime       string
 	panicTime     string
-	status        uint32 //0没有启动 1运行中 2退出 3panic
-	panicTimes    uint64 //panic发生的次数
-	lastPanicInfo string //最后一次panic的信息
+	status        uint32 // 0没有启动 1运行中 2退出 3panic
+	panicTimes    uint64 // panic发生的次数
+	lastPanicInfo string // 最后一次panic的信息
 }
 
-//string信息收集  num1启动中的数量 num2已经退出的数量 num3已经panic的数量 num4 总数量  num5 历史panic数量
-func (r *Routine) show() (string, int, int, int, int, int) {
+// string信息收集  num1启动中的数量 num2已经退出的数量 num3已经panic的数量 num4 总数量  num5 历史panic数量
+func (r *Routine) show() (readme string, countRun, countQuit, countPanic, countAll, countHistory int) {
 	str := ""
 	num1 := 0
 	num2 := 0
@@ -252,15 +252,15 @@ func (r *Routine) show() (string, int, int, int, int, int) {
 	defer r.mu.Unlock()
 	str += "\nGoroutine名称:" + r.name + "\n"
 	statusReadme := ""
-	if r.status == STATUS_INIT {
+	if r.status == STATUSINIT {
 		statusReadme = "未启动"
-	} else if r.status == STATUS_RUN {
+	} else if r.status == STATUSRUN {
 		statusReadme = "运行中"
 		num1 = 1
-	} else if r.status == STATUS_OUT {
+	} else if r.status == STATUSOUT {
 		statusReadme = "已退出"
 		num2 = 1
-	} else if r.status == STATUS_PANIC {
+	} else if r.status == STATUSPANIC {
 		statusReadme = "已恐慌"
 		num3 = 1
 	}
@@ -278,16 +278,15 @@ func (r *Routine) show() (string, int, int, int, int, int) {
 
 /**********************************************监控***************************************************/
 var StartedMonitor int32 = 0
+
 func StartMonitor(port string) {
-	if atomic.CompareAndSwapInt32(&StartedMonitor,0,1) {
-		go serverkit.NewSimpleHttpServer().Add("/", httpShowAll).Start(port)
+	if atomic.CompareAndSwapInt32(&StartedMonitor, 0, 1) {
+		go serverkit.NewSimpleHTTPServer().Add("/", httpShowAll).Start(port)
 	}
 
 }
 
 func httpShowAll(w http.ResponseWriter, r *http.Request) {
-	//fmt.Println("yes")
-	r.ParseForm()
 	str := defaultco.showAll()
 	fmt.Fprintln(w, str)
 }

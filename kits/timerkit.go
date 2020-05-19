@@ -1,6 +1,6 @@
 package kits
 
-//时间记录
+//  时间记录
 import (
 	"fmt"
 	"strconv"
@@ -18,19 +18,19 @@ import (
 		tk.End(tick2)
 		time.Sleep(time.Millisecond*10)
 		tk.End(tick3)
-//记录最近的时间比较长的操作
+// 记录最近的时间比较长的操作
 */
 const (
 	sLOWLOGNAME   = "slowest"
 	lASTLOGNAME   = "last"
-	sLOWNANO      = 10000000 //耗时大于这个+平均数算作慢   (nano单位)
+	sLOWNANO      = 10000000 //  耗时大于这个+平均数算作慢   (nano单位)
 	TIMEKITMAXKIT = 1000
 )
 
 type TimerKit struct {
 	node   *timerKitNode
 	name   string
-	readme string //名称的注释
+	readme string //  名称的注释
 	used   uint32
 }
 
@@ -45,16 +45,13 @@ func NewTimerKit(name, readme string) *TimerKit {
 }
 func (tk *TimerKit) isUsed() bool {
 	v := atomic.LoadUint32(&tk.used)
-	if v == 0 {
-		return false
-	}
-	return true
+	return v != 0
 }
 func (tk *TimerKit) setUsed() {
 	atomic.StoreUint32(&tk.used, 1)
 }
 func (tk *TimerKit) Show() string {
-	if tk.isUsed() == false {
+	if !tk.isUsed() {
 		return ""
 	}
 	str := ""
@@ -80,7 +77,7 @@ func (tk *TimerKit) End(tick *Tick) {
 }
 func (tk *TimerKit) Info() string {
 	timerKitNode := tk.node
-	//这里不用考虑组装字符串的性能，因为没必要， 而且数据很小的常见，+的低性能劣势并不明显
+	//  这里不用考虑组装字符串的性能，因为没必要， 而且数据很小的常见，+的低性能劣势并不明显
 	resStr := ""
 	resStr += "count:" + strconv.FormatInt(timerKitNode.getCount(), 10) + "次\n"
 	resStr += "sum:" + strconv.FormatFloat(timerKitNode.getSum(), 'f', 6, 64) + "秒\n"
@@ -91,14 +88,14 @@ func (tk *TimerKit) Info() string {
 }
 
 type timerKitNode struct {
-	name    string  //计时器的名字
-	count   int64   //经过了多少次计数
-	sum     int64   //总计时时间
-	slowest *LogKit //该计时器的慢操作列表
+	name    string  //  计时器的名字
+	count   int64   //  经过了多少次计数
+	sum     int64   //  总计时时间
+	slowest *LogKit //  该计时器的慢操作列表
 	last    *LogKit
 }
 
-//单次计时操作
+// 单次计时操作
 type Tick struct {
 	timerName string
 	info      string

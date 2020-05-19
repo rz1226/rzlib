@@ -13,24 +13,24 @@ import (
     去掉了retry， 因为没啥用处，反而使得设计更难. 重试是在调用方处理是最明智的。
 */
 
-const RATEKITCHANSIZE = 100               //任务队列chan长度
-const MAX_TASK_NUM_EVERY_SECOND = 1000000 //最大速度
+const RATEKITCHANSIZE = 100               // 任务队列chan长度
+const MAX_TASK_NUM_EVERY_SECOND = 1000000 // 最大速度
 const FACTORY_SIZE = 200
 
 type Task struct {
-	f func() bool //任务函数，要符合这个格式，实际应用中一般来说是个闭包
+	f func() bool // 任务函数，要符合这个格式，实际应用中一般来说是个闭包
 }
 
 type RateKit struct {
-	tokenChan           chan struct{} //令牌队列
-	currentCount        uint32        //上一秒执行的次数
-	limitCountPerSecond uint32        //每秒最大执行次数
+	tokenChan           chan struct{} // 令牌队列
+	currentCount        uint32        // 上一秒执行的次数
+	limitCountPerSecond uint32        // 每秒最大执行次数
 	asynChan            chan Task
 	factory             *WorkerFactory
-	bb                  *blackboardkit.BlackBoradKit //记录日志信息用的黑板
+	bb                  *blackboardkit.BlackBoradKit // 记录日志信息用的黑板
 }
 
-//limitcount 每秒钟运行次数上限制， workernum工作go程数量， issync是否是同步模式
+// limitcount 每秒钟运行次数上限制， workernum工作go程数量， issync是否是同步模式
 func NewRateKit(limitCount uint32) *RateKit {
 	rk := &RateKit{}
 	rk.currentCount = 0
@@ -42,7 +42,7 @@ func NewRateKit(limitCount uint32) *RateKit {
 	rk.tokenChan = make(chan struct{}, MAX_TASK_NUM_EVERY_SECOND)
 	rk.bb = blackboardkit.NewBlockBorad("ratekit", "ratekit", "限速器记录")
 
-	//启动异步任务go程
+	// 启动异步任务go程
 	rk.factory = newFactory(rk.asynTask, FACTORY_SIZE)
 	rk.factory.setRunning()
 	go rk.resetAll()
@@ -63,15 +63,12 @@ func (rk *RateKit) resetAll() {
 	}
 
 }
-func (rk *RateKit) getCount() uint32 {
-	return atomic.LoadUint32(&rk.currentCount)
-}
 
 func (rk *RateKit) getLimitCount() uint32 {
 	return atomic.LoadUint32(&rk.limitCountPerSecond)
 }
 
-//放令牌
+// 放令牌
 func (rk *RateKit) releaseToken() {
 	limit := rk.getLimitCount()
 	t1 := time.Tick(time.Second)
@@ -86,9 +83,9 @@ func (rk *RateKit) releaseToken() {
 	}
 }
 
-//如果chan满了，这个函数会阻塞
-//这个函数的基本功能是把函数包装后放入队列
-//需要控制入队列的速度，否则队列满的话，会阻塞大批worker在任务未完成重新放入队列的时候
+// 如果chan满了，这个函数会阻塞
+// 这个函数的基本功能是把函数包装后放入队列
+// 需要控制入队列的速度，否则队列满的话，会阻塞大批worker在任务未完成重新放入队列的时候
 func (rk *RateKit) Go(f func() bool) {
 	rk.bb.Inc()
 
@@ -97,11 +94,11 @@ func (rk *RateKit) Go(f func() bool) {
 	rk.asynChan <- rf
 }
 
-//这个就是要送给worker执行任务函数
-//这个函数的基本任务是把任务从队列拿出来然后执行
+// 这个就是要送给worker执行任务函数
+// 这个函数的基本任务是把任务从队列拿出来然后执行
 func (rk *RateKit) asynTask() bool {
 	rf := <-rk.asynChan
-	<-rk.tokenChan //消费令牌
+	<-rk.tokenChan // 消费令牌
 	f := rf.f
 	rk.incCount()
 	return f()
@@ -110,12 +107,12 @@ func (rk *RateKit) asynTask() bool {
 /***************************************worker*******************************/
 
 type WorkerFactory struct {
-	workerList []*Worker                    //正在运行的worker集合
-	bb         *blackboardkit.BlackBoradKit //记录日志信息用的黑板
+	workerList []*Worker                    // 正在运行的worker集合
+	bb         *blackboardkit.BlackBoradKit // 记录日志信息用的黑板
 
 }
 
-//第一个参数是worker工作的函数
+// 第一个参数是worker工作的函数
 func newFactory(f func() bool, size int) *WorkerFactory {
 	fac := &WorkerFactory{}
 	fac.workerList = make([]*Worker, 0, size)
@@ -139,18 +136,15 @@ func (fac *WorkerFactory) setRunning() {
 }
 
 type Worker struct {
-	running uint32      //0:关闭  1：打开
-	f       func() bool //工作函数，例如从某个chan拿出数据然后处理，可以一直重复执行 ,函数结束后协程退出
-	//数据并且处理
-	factory *WorkerFactory //所属的工厂
+	running uint32      // 0:关闭  1：打开
+	f       func() bool // 工作函数，例如从某个chan拿出数据然后处理，可以一直重复执行 ,函数结束后协程退出
+	// 数据并且处理
+	factory *WorkerFactory // 所属的工厂
 }
 
 func (w *Worker) isRunning() bool {
 	v := atomic.LoadUint32(&w.running)
-	if v == 0 {
-		return false
-	}
-	return true
+	return v != 0
 }
 func (w *Worker) setRunning() {
 	atomic.StoreUint32(&w.running, 1)
@@ -164,21 +158,21 @@ func (w *Worker) run() {
 	defer func() {
 		if co := recover(); co != nil {
 			w.factory.bb.Panic("worker_panic", "worker 发生异常:", co)
-			time.Sleep(time.Millisecond * time.Duration(20+getRandInt(300))) //如果挂了，等一点点时间再重启，防止无限挂跑死cpu
+			time.Sleep(time.Millisecond * time.Duration(20+getRandInt(300))) // 如果挂了，等一点点时间再重启，防止无限挂跑死cpu
 			w.run()
 		}
 	}()
 
-	if w.isRunning() == true {
+	if w.isRunning() {
 		for {
 			result := w.f()
-			if result == true {
+			if result {
 				w.factory.bb.Log("worker 函数执行成功")
 			} else {
 				w.factory.bb.Err("worker 函数执行失败")
 			}
-			if w.isRunning() == false {
-				//状态为停止，关闭worker
+			if !w.isRunning() {
+				// 状态为停止，关闭worker
 				w.factory.bb.Warn("关闭 worker")
 				return
 			}

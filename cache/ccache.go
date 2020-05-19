@@ -1,6 +1,6 @@
 package cache
 
-//内存lru cache
+//  内存lru cache
 
 import (
 	"errors"
@@ -20,7 +20,7 @@ func NewCCache(maxSize int) *CCache {
 }
 
 func (cd Data) ToCCache(source *CCache, duration time.Duration) error {
-	if len(cd.key) == 0 {
+	if cd.key == "" {
 		return errors.New("no key for ccache")
 	}
 	source.c.Set(cd.key, cd.data, duration)

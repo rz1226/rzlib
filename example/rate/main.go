@@ -30,19 +30,19 @@ func testx() {
 		f := func(a int) func() bool {
 			return func() bool {
 
-				//fmt.Println("闭包", a   )
-				//time.Sleep(time.Millisecond*1)
+				//  fmt.Println("闭包", a   )
+				//  time.Sleep(time.Millisecond*1)
 				panic(1)
 				return false
 			}
 
 		}(i)
 
-		//time.Sleep(time.Microsecond*20)
+		//  time.Sleep(time.Microsecond*20)
 		rk.Go(f)
 
 	}
-	//fmt.Println( rk.Show())
+	//  fmt.Println( rk.Show())
 }
 
 func main() {

@@ -31,7 +31,7 @@ query的结果是QueryRes ，本质是一个map，可以批量修改，然后Que
 
 
 */
-type DbConf struct {
+type DBConf struct {
 	user   string
 	pass   string
 	host   string
@@ -41,8 +41,8 @@ type DbConf struct {
 	maxCon int
 }
 
-func NewDbConf(user, pass, host, port, dbName string, maxCon int) DbConf {
-	conf := DbConf{}
+func NewDbConf(user, pass, host, port, dbName string, maxCon int) DBConf {
+	conf := DBConf{}
 	conf.user = user
 	conf.pass = pass
 	conf.host = host
@@ -53,47 +53,52 @@ func NewDbConf(user, pass, host, port, dbName string, maxCon int) DbConf {
 	return conf
 }
 
-//获取配置串
-func (c DbConf) Str() string {
+// 获取配置串
+func (c *DBConf) Str() string {
 	str := fmt.Sprint(c.user, ":", c.pass, "@tcp(", c.host, ":", c.port, ")/", c.dbName, "?charset=utf8")
 	return str
 }
 
-func (c DbConf) Connect() (*DB, error) {
+func (c *DBConf) Connect() (*DB, error) {
 	db, err := newDB(c.Str(), c.maxCon)
 	return db, err
 }
 
-//代表事务
-type DbTx struct {
+// 代表事务
+type DBTx struct {
 	realtx *sql.Tx
 }
 
-//提交事务
-func (tx *DbTx) Commit() error {
+// 提交事务
+func (tx *DBTx) Commit() error {
 	return tx.realtx.Commit()
 }
 
-//事务回滚
-func (tx *DbTx) Rollback() error {
+// 事务回滚
+func (tx *DBTx) Rollback() error {
 	return tx.realtx.Rollback()
 }
 
-//代表数据库操作，自带池子
+// 代表数据库操作，自带池子
 type DB struct {
 	realPool *sql.DB
 }
 
-//"gechengzhen:123456@tcp(172.16.1.61:3306)/userdata?charset=utf8"
+const MAXLIFETIME = 1200
+const MAXOPENCONNS = 1000
+const DEFAULTOPENCONNS = 20
+const MAXIDLECONNSRATIO = 5
+
+// "gechengzhen:123456@tcp(172.16.1.61:3306)/userdata?charset=utf8"
 func newDB(conStr string, maxOpenConns int) (*DB, error) {
-	if maxOpenConns <= 0 || maxOpenConns >= 1000 {
-		maxOpenConns = 20
+	if maxOpenConns <= 0 || maxOpenConns >= MAXOPENCONNS {
+		maxOpenConns = DEFAULTOPENCONNS
 	}
 	pool, err := sql.Open("mysql", conStr)
 	if err == nil {
 		pool.SetMaxOpenConns(maxOpenConns)
-		pool.SetMaxIdleConns(maxOpenConns / 5)
-		pool.SetConnMaxLifetime(time.Second * 1200)
+		pool.SetMaxIdleConns(maxOpenConns / MAXIDLECONNSRATIO)
+		pool.SetConnMaxLifetime(time.Second * MAXLIFETIME)
 		p := &DB{}
 		p.realPool = pool
 		return p, nil
@@ -101,17 +106,17 @@ func newDB(conStr string, maxOpenConns int) (*DB, error) {
 	return nil, err
 }
 
-//获取*sql.DB
+// 获取*sql.DB
 func (p *DB) DB() *sql.DB {
 	return p.realPool
 }
 
-func (p *DB) Begin() (*DbTx, error) {
+func (p *DB) Begin() (*DBTx, error) {
 	realtx, err := p.realPool.Begin()
 	if err != nil {
 		return nil, err
 	} else {
-		t := &DbTx{}
+		t := &DBTx{}
 		t.realtx = realtx
 		return t, nil
 	}

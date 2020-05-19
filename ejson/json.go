@@ -7,12 +7,12 @@ import (
 )
 
 type Ejson struct {
-	j       interface{} //json对象，一般是[]interface{}或者map[string]interface{}
-	s       []byte      //json字符串
-	exist_j bool
-	exist_s bool
-	j_err   bool
-	s_err   bool
+	j      interface{} //  json对象，一般是[]interface{}或者map[string]interface{}
+	s      []byte      //  json字符串
+	existJ bool
+	existS bool
+	jErr   bool
+	sErr   bool
 }
 
 func (e *Ejson) getj() interface{} {
@@ -32,90 +32,90 @@ func (e *Ejson) gets() []byte {
 }
 
 func (e *Ejson) setj() error {
-	if e.exist_j == true {
+	if e.existJ {
 		return nil
 	}
-	if e.j_err == true {
+	if e.jErr {
 		return nil
 	}
-	if e.exist_s == false {
+	if !e.existS {
 		return errors.New("ejson setj error")
 	}
 	err := json.Unmarshal(e.s, &e.j)
 	if err != nil {
-		e.j_err = true
+		e.jErr = true
 		return err
 	}
-	e.exist_j = true
+	e.existJ = true
 	return nil
 }
 func (e *Ejson) sets() error {
-	if e.exist_s == true {
+	if e.existS {
 		return nil
 	}
-	if e.s_err == true {
+	if e.sErr {
 		return nil
 	}
-	if e.exist_j == false {
+	if !e.existJ {
 		return errors.New("ejson sets error")
 	}
 	s, err := json.Marshal(e.j)
 	if err != nil {
-		e.s_err = true
+		e.sErr = true
 		return err
 	}
 	e.s = s
-	e.exist_s = true
+	e.existS = true
 	return nil
 }
 
-//和newejson的区别是会检查错误，性能稍低
+//  和newejson的区别是会检查错误，性能稍低
 func NewEjsonWithCheck(j interface{}) (*Ejson, error) {
-	json, err := NewEjson(j)
+	json2, err := NewEjson(j)
 	if err != nil {
 		return nil, err
 	}
-	if err := json.setj(); err != nil {
+	if err := json2.setj(); err != nil {
 		return nil, err
 	}
-	if err := json.sets(); err != nil {
+	if err := json2.sets(); err != nil {
 		return nil, err
 	}
-	return json, nil
+	return json2, nil
 }
 
 func NewEjson(j interface{}) (*Ejson, error) {
 	e := Ejson{}
-	e.exist_j = false
-	e.exist_s = false
-	e.j_err = false
-	e.s_err = false
+	e.existJ = false
+	e.existS = false
+	e.jErr = false
+	e.sErr = false
 	if jdata, ok := j.(string); ok {
 		e.s = []byte(jdata)
-		e.exist_s = true
+		e.existS = true
 		return &e, nil
 	}
 	if jdata, ok := j.([]byte); ok {
 		e.s = jdata
-		e.exist_s = true
+		e.existS = true
 		return &e, nil
 	}
 	_, ok := j.([]interface{})
 	_, ok2 := j.(map[string]interface{})
-	if ok == false && ok2 == false {
+	if (!ok) && (!ok2) {
 		return nil, errors.New("not slice or map, invalid json")
 	}
 	e.j = j
-	e.exist_j = true
+	e.existJ = true
 	return &e, nil
 }
 
-//func (e *Ejson) Fresh() {
-//	s, _ := json.Marshal(e.j)
-//	e.s = string(s)
-//}
+// func (e *Ejson) Fresh() {
+// 	s, _ := json.Marshal(e.j)
+// 	e.s = string(s)
+// }
 
-func (e *Ejson) Json() interface{} {
+func (e *Ejson) JSON() interface{} {
 	return e.getj()
 }
 
@@ -130,7 +130,7 @@ func (e *Ejson) String() string {
 	return string(e.gets())
 }
 
-//拷贝map类型的json , 就是新创建，用s解析填充
+//  拷贝map类型的json , 就是新创建，用s解析填充
 func (e *Ejson) CopyMap() (map[string]interface{}, error) {
 	if e.IsMap() {
 		var result map[string]interface{}
@@ -143,7 +143,7 @@ func (e *Ejson) CopyMap() (map[string]interface{}, error) {
 	return nil, errors.New("ejson:copymap: this is not map")
 }
 
-//如果不是map类型返回空值
+//  如果不是map类型返回空值
 func (e *Ejson) MapData() map[string]interface{} {
 	data, ok := e.getj().(map[string]interface{})
 	if ok {
@@ -152,7 +152,7 @@ func (e *Ejson) MapData() map[string]interface{} {
 	return make(map[string]interface{})
 }
 
-//如果不是数组类型返回空值
+//  如果不是数组类型返回空值
 func (e *Ejson) ArrayData() []interface{} {
 	data, ok := e.getj().([]interface{})
 	if ok {
@@ -197,7 +197,6 @@ func (e *Ejson) ArrayGetData(key int) (*Ejson, error) {
 	m := v[key]
 	return NewEjson(m)
 
-	//return &Ejson{j: m}, nil
 }
 
 func (e *Ejson) ArrayGetMap(key int) (*Ejson, error) {
@@ -402,23 +401,17 @@ func (e *Ejson) MapGetString(key string) (string, error) {
 func (e *Ejson) IsMap() bool {
 
 	_, ok := e.getj().(map[string]interface{})
-	if ok {
-		return true
-	}
-	return false
+	return ok
 }
 
 func (e *Ejson) IsArray() bool {
 
 	_, ok := e.getj().([]interface{})
-	if ok {
-		return true
-	}
-	return false
+	return ok
 }
 
-//其作用是复制一个map json, 解决在收集筛选结果的时候复制了map本身，底层数据仍然公用
-//当然，数据的复制是有性能代价的
+//  其作用是复制一个map json, 解决在收集筛选结果的时候复制了map本身，底层数据仍然公用
+//  当然，数据的复制是有性能代价的
 func CopyMap(m map[string]interface{}) map[string]interface{} {
 	tmp, err := NewEjson(m)
 	if err == nil {

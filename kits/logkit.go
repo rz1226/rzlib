@@ -9,15 +9,15 @@ import (
 )
 
 const (
-	sIZE      = 500  //log存储空间总长度
-	fetchSIZE = 40   //一次拿多少
-	strSIZE   = 3000 //单条日志的最大限制
+	sIZE      = 500  //  log存储空间总长度
+	fetchSIZE = 40   //  一次拿多少
+	strSIZE   = 3000 //  单条日志的最大限制
 )
 
 type LogKit struct {
 	logs   *CircleQueue
-	name   string //有了这个show的时候不用锁
-	readme string //名称的注释
+	name   string //  有了这个show的时候不用锁
+	readme string //  名称的注释
 	used   uint32
 }
 
@@ -31,18 +31,15 @@ func NewLogKit(name, readme string) *LogKit {
 }
 func (lk *LogKit) isUsed() bool {
 	v := atomic.LoadUint32(&lk.used)
-	if v == 0 {
-		return false
-	}
-	return true
+	return v != 0
 }
 func (lk *LogKit) setUsed() {
 	atomic.StoreUint32(&lk.used, 1)
 }
 
-//展示数据
+//  展示数据
 func (lk *LogKit) Show() string {
-	if lk.isUsed() == false {
+	if !lk.isUsed() {
 		return ""
 	}
 	str := ""
@@ -51,21 +48,18 @@ func (lk *LogKit) Show() string {
 	return str
 }
 
-//显示最近的count条记录
+//  显示最近的count条记录
 func (lk *LogKit) FetchContents(count int) string {
-	values, newestId := lk.logs.GetSeveral(count)
-	return formatFetchedLog(values, newestId)
+	values, newestID := lk.logs.GetSeveral(count)
+	return formatFetchedLog(values, newestID)
 }
 
-//把日志信息放入，然后返回格式化后的字符串
+//  把日志信息放入，然后返回格式化后的字符串
 func (lk *LogKit) PutContentsAndFormat(a ...interface{}) string {
 	lk.setUsed()
 	cq := lk.logs
 	buffer := bytes.Buffer{}
-	//buffer.WriteString(lk.name)
-	//buffer.WriteString(" ")
 	now := time.Now()
-	//buffer.WriteString(now.String() + "\n")
 	buffer.WriteString(now.Format("2006-01-02 15:04:05") + " 0." + fmt.Sprint(now.Nanosecond()))
 	buffer.WriteString("\n")
 	for _, v := range a {
@@ -74,7 +68,7 @@ func (lk *LogKit) PutContentsAndFormat(a ...interface{}) string {
 			str = str[0:strSIZE] + "......后面的内容过长截断......"
 		}
 		buffer.WriteString(str)
-		//每一个参数后面都加一个换行
+		//  每一个参数后面都加一个换行
 		buffer.WriteString("\n")
 	}
 
@@ -83,7 +77,7 @@ func (lk *LogKit) PutContentsAndFormat(a ...interface{}) string {
 	return logStr
 }
 
-//美化输出
+//  美化输出
 func formatFetchedLog(values []interface{}, id uint64) string {
 	buffer := bytes.Buffer{}
 	buffer.WriteString("序号: " + strconv.FormatUint(id, 10) + "\n")

@@ -11,7 +11,7 @@ type SomeBB struct {
 	Db         *blackboardkit.BlackBoradKit `readme:"调用数据库 "`
 }
 
-//每一个blackboard包含info, err, warn 日志， 一个计数器，一个计时器
+//  每一个blackboard包含info, err, warn 日志， 一个计数器，一个计时器
 
 func main() {
 

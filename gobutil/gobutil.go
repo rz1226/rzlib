@@ -10,7 +10,7 @@ func Save(path string, object interface{}) error {
 	if err == nil {
 		defer file.Close()
 		encoder := gob.NewEncoder(file)
-		return  encoder.Encode(object)
+		return encoder.Encode(object)
 	}
 	return err
 }
@@ -20,8 +20,7 @@ func Load(path string, object interface{}) error {
 	if err == nil {
 		defer file.Close()
 		decoder := gob.NewDecoder(file)
-		return  decoder.Decode(object)
+		return decoder.Decode(object)
 	}
 	return err
 }
-

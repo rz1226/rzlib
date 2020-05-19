@@ -1,12 +1,11 @@
 package gobutil
 
-import(
+import (
 	"fmt"
 	"os"
 	"runtime"
 	"testing"
-
-	)
+)
 
 const file = "./test.gob"
 
@@ -14,7 +13,7 @@ type User struct {
 	Name, Pass string
 }
 
-func Test_save_load( t *testing.T ) {
+func Test_save_load(t *testing.T) {
 	var datato = &User{"Donald", "DuckPass"}
 	var datafrom = new(User)
 
@@ -26,9 +25,9 @@ func Test_save_load( t *testing.T ) {
 
 }
 
-func Test_save_load_map( t *testing.T ) {
-	var datato = map[string]string{"a":"b"}
-	var datafrom = make(map[string]string,0)
+func Test_save_load_map(t *testing.T) {
+	var datato = map[string]string{"a": "b"}
+	var datafrom = make(map[string]string)
 
 	err := Save(file, datato)
 	Check(err)
@@ -37,10 +36,6 @@ func Test_save_load_map( t *testing.T ) {
 	fmt.Println(datafrom)
 
 }
-
-
-
-
 
 func Check(e error) {
 	if e != nil {

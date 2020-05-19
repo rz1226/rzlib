@@ -9,28 +9,28 @@ import (
 	"time"
 )
 
-var currentId uint64 = 0
+var currentID uint64 = 0
 var actorbb *blackboardkit.BlackBoradKit
-var CONFIG_CSize int //数据队列的长度
-var CONFIG_CUM_TICK_LONG time.Duration
+var CONFIGCSize int //  数据队列的长度
+var CONFIGCUMTICKLONG time.Duration
 
 func init() {
-	CONFIG_CSize = 10
-	CONFIG_CUM_TICK_LONG = time.Millisecond * 50
+	CONFIGCSize = 10
+	CONFIGCUMTICKLONG = time.Millisecond * 50
 }
 
 func init() {
 	actorbb = blackboardkit.NewBlockBorad("actor", "actor", "actor记录")
 }
 
-//模拟的actor
+//  模拟的actor
 type Actor struct {
-	Id              uint64
+	ID              uint64
 	Name            string
 	CumulateCount   uint32
 	C               chan interface{}
 	F               func(interface{}) (interface{}, error)
-	NumOfConcurrent uint8 //并发数量
+	NumOfConcurrent uint8 //  并发数量
 	Next            []*Actor
 }
 
@@ -39,8 +39,8 @@ func NewActor(f func(interface{}) (interface{}, error), numOfConcurrent int, nam
 	a.Name = name
 
 	a.CumulateCount = 1
-	a.Id = atomic.AddUint64(&currentId, 1)
-	a.C = make(chan interface{}, CONFIG_CSize)
+	a.ID = atomic.AddUint64(&currentID, 1)
+	a.C = make(chan interface{}, CONFIGCSize)
 	a.F = f
 	a.NumOfConcurrent = uint8(numOfConcurrent)
 	if a.NumOfConcurrent <= 0 {
@@ -50,13 +50,15 @@ func NewActor(f func(interface{}) (interface{}, error), numOfConcurrent int, nam
 	return a
 }
 
-//不设置，默认为1 表示不累积
+const MAXCUMULATECOUNT = 10000
+
+//  不设置，默认为1 表示不累积
 func (a *Actor) SetCumulateCount(cumulateCount uint32) *Actor {
 	if cumulateCount == 0 {
 		cumulateCount = 1
 	}
-	if cumulateCount > 10000 {
-		cumulateCount = 10000
+	if cumulateCount > MAXCUMULATECOUNT {
+		cumulateCount = MAXCUMULATECOUNT
 	}
 	a.CumulateCount = cumulateCount
 	return a
@@ -97,9 +99,9 @@ func (a *Actor) run() {
 			cumulateData = make([]interface{}, 0, a.CumulateCount)
 			needCum = true
 		}
-		t := time.NewTicker(CONFIG_CUM_TICK_LONG)
+		t := time.NewTicker(CONFIGCUMTICKLONG)
 		for {
-			//从队列获取数据
+			//  从队列获取数据
 			select {
 			case data := <-a.C:
 				if data == nil {
@@ -120,7 +122,7 @@ func (a *Actor) run() {
 				} else {
 					res = data
 				}
-				if needCum == true {
+				if needCum {
 					cumulateData = append(cumulateData, res)
 					cumcount++
 					if cumcount == a.CumulateCount {
@@ -147,7 +149,7 @@ func (a *Actor) run() {
 			}
 		}
 	}
-	coroutinekit.Start("actor job name = "+a.Name+" id="+fmt.Sprint(a.Id), int(a.NumOfConcurrent), workF, true)
+	coroutinekit.Start("actor job name = "+a.Name+" id="+fmt.Sprint(a.ID), int(a.NumOfConcurrent), workF, true)
 	if len(a.Next) > 0 {
 		for _, v := range a.Next {
 			v.run()

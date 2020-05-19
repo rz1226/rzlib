@@ -3,7 +3,7 @@ package kits
 import "sync/atomic"
 
 type Ready struct {
-	status uint32 //0表示没有就绪  1就绪
+	status uint32 //  0表示没有就绪  1就绪
 }
 
 func NewReady() *Ready {
@@ -20,8 +20,5 @@ func (r *Ready) SetFalse() {
 
 func (r *Ready) IsReady() bool {
 	status := atomic.LoadUint32(&r.status)
-	if status == 1 {
-		return true
-	}
-	return false
+	return status == 1
 }

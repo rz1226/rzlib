@@ -1,7 +1,7 @@
 package serverkit
 
-//设立简单的http服务，一般用来做测试，例如测试http客户端，等
-//服务端单个请求不能超过60秒
+// 设立简单的http服务，一般用来做测试，例如测试http客户端，等
+// 服务端单个请求不能超过60秒
 import (
 	"errors"
 	"net/http"
@@ -9,22 +9,22 @@ import (
 	"time"
 )
 
-//NewSimpleHttpServer().Add("/",f ).Start("8080")
+// NewSimpleHttpServer().Add("/",f ).Start("8080")
 
-type SimpleHttpServer struct {
+type SimpleHTTPServer struct {
 	mux *memux
 }
 
-func NewSimpleHttpServer() *SimpleHttpServer {
-	ms := &SimpleHttpServer{}
+func NewSimpleHTTPServer() *SimpleHTTPServer {
+	ms := &SimpleHTTPServer{}
 	ms.mux = newmemux()
 	return ms
 }
-func (ms *SimpleHttpServer) Add(path string, f func(w http.ResponseWriter, r *http.Request)) *SimpleHttpServer {
+func (ms *SimpleHTTPServer) Add(path string, f func(w http.ResponseWriter, r *http.Request)) *SimpleHTTPServer {
 	ms.mux.AddFunc(path, f)
 	return ms
 }
-func (ms *SimpleHttpServer) Start(port string) {
+func (ms *SimpleHTTPServer) Start(port string) error {
 	mux := ms.mux
 	server := http.Server{
 		Addr:         "0.0.0.0:" + port,
@@ -33,7 +33,7 @@ func (ms *SimpleHttpServer) Start(port string) {
 		WriteTimeout: time.Second * 60,
 	}
 	server.SetKeepAlivesEnabled(true)
-	server.ListenAndServe()
+	return server.ListenAndServe()
 }
 
 type memux struct {
@@ -71,7 +71,6 @@ func (m *memux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	f(w, r)
-	return
 }
 
 /*

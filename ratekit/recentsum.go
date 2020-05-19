@@ -5,25 +5,24 @@ package ratekit
 */
 
 import (
-	//"fmt"
 	"sync"
 )
 
 type RecentSum struct {
-	ints []int //这个结构的目的就是计算这里的和
-	len  int   //只保留len个数字，多余的扔出去
+	ints []int // 这个结构的目的就是计算这里的和
+	len  int   // 只保留len个数字，多余的扔出去
 	mu   *sync.RWMutex
 }
 
-func NewRecentSum(len int) *RecentSum {
-	if len <= 0 {
-		len = 5
+func NewRecentSum(length int) *RecentSum {
+	if length <= 0 {
+		length = 5
 	}
 	r := &RecentSum{}
-	r.len = len
+	r.len = length
 	r.mu = &sync.RWMutex{}
-	r.ints = make([]int, len, len)
-	for i := 0; i < len; i++ {
+	r.ints = make([]int, length)
+	for i := 0; i < length; i++ {
 		r.ints[i] = 0
 	}
 	return r
@@ -36,7 +35,7 @@ func (r *RecentSum) Put(n int) {
 
 }
 func (r *RecentSum) Sum() int {
-	//fmt.Println( r.ints )
+	// fmt.Println( r.ints )
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	sum := 0

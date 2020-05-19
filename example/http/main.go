@@ -6,17 +6,17 @@ import (
 	"time"
 )
 
-var client *httpkit.HttpClient
+var client *httpkit.HTTPClient
 
 func init() {
 
-	client = httpkit.NewHttpClient(1, 100)
+	client = httpkit.NewHTTPClient(1, 100)
 	blackboardkit.StartMonitor("9090")
 }
 
 func main() {
 	for i := 0; i < 100; i++ {
-		client.Get("http://www.baidu.com")
+		client.Get("http:// www.baidu.com")
 	}
 
 	time.Sleep(time.Second * 1000)
