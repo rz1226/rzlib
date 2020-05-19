@@ -119,9 +119,8 @@ func _isBmMany(v reflect.Type) (bool, error) {
 		}
 		if !res {
 			return true, nil
-		} else {
-			return false, errors.New("struct bm只有两种形式是对的，*struct,  *[]*struct")
 		}
+		return false, errors.New("struct bm只有两种形式是对的，*struct,  *[]*struct")
 
 	case reflect.Struct:
 		return false, nil

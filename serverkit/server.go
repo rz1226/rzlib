@@ -4,6 +4,7 @@ package serverkit
 // 服务端单个请求不能超过60秒
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -24,7 +25,7 @@ func (ms *SimpleHTTPServer) Add(path string, f func(w http.ResponseWriter, r *ht
 	ms.mux.AddFunc(path, f)
 	return ms
 }
-func (ms *SimpleHTTPServer) Start(port string) error {
+func (ms *SimpleHTTPServer) Start(port string) {
 	mux := ms.mux
 	server := http.Server{
 		Addr:         "0.0.0.0:" + port,
@@ -33,7 +34,10 @@ func (ms *SimpleHTTPServer) Start(port string) error {
 		WriteTimeout: time.Second * 60,
 	}
 	server.SetKeepAlivesEnabled(true)
-	return server.ListenAndServe()
+	err := server.ListenAndServe()
+	if err != nil {
+		fmt.Println("simplehttpserver start err:", err)
+	}
 }
 
 type memux struct {
@@ -41,10 +45,12 @@ type memux struct {
 	mu    *sync.RWMutex
 }
 
+const ROADSCOUNT = 100
+
 func newmemux() *memux {
 	m := &memux{}
 	m.mu = &sync.RWMutex{}
-	m.roads = make(map[string]func(w http.ResponseWriter, r *http.Request), 100)
+	m.roads = make(map[string]func(w http.ResponseWriter, r *http.Request), ROADSCOUNT)
 	return m
 }
 

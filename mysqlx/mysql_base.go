@@ -25,8 +25,6 @@ fmt.Println( p.Exec("insert into ytk_car_test set license = '赣B'", nil))
 tx := db.Begin()
 tx.Query(xxx)
 tx.Commit()
-
-
 query的结果是QueryRes ，本质是一个map，可以批量修改，然后QueryRes 可以转化成Struct业务模型,可单个也可以批量。
 
 
@@ -37,18 +35,16 @@ type DBConf struct {
 	host   string
 	port   string
 	dbName string
-
 	maxCon int
 }
 
-func NewDbConf(user, pass, host, port, dbName string, maxCon int) DBConf {
+func NewDBConf(user, pass, host, port, dbName string, maxCon int) DBConf {
 	conf := DBConf{}
 	conf.user = user
 	conf.pass = pass
 	conf.host = host
 	conf.port = port
 	conf.dbName = dbName
-
 	conf.maxCon = maxCon
 	return conf
 }
@@ -115,9 +111,9 @@ func (p *DB) Begin() (*DBTx, error) {
 	realtx, err := p.realPool.Begin()
 	if err != nil {
 		return nil, err
-	} else {
-		t := &DBTx{}
-		t.realtx = realtx
-		return t, nil
 	}
+	t := &DBTx{}
+	t.realtx = realtx
+	return t, nil
+
 }

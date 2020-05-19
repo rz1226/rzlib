@@ -117,11 +117,8 @@ func (q *QueryRes) ToStruct(dstStructs interface{}) error {
 	}
 	if isMany {
 		return queryRes2StructBatch(data, dstStructs, nil)
-	} else {
-		// 处理单个
-		return queryRes2Struct(data[0], dstStructs, nil)
 	}
-
+	return queryRes2Struct(data[0], dstStructs, nil)
 }
 
 //  map数据映射到struct, 同名映射到struct的key不区分大小写，检查类型  。dstStruct是接收数据的struct的指针

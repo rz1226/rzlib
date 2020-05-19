@@ -143,7 +143,7 @@ func queryResFromRows(rows *sql.Rows) ([]map[string]interface{}, error) {
 			scanRes := make([]sql.Scanner, lengthRow)
 			for i := 0; i < lengthRow; i++ {
 				vType := columns[i].DatabaseTypeName()
-				// fmt.Println("vtype", columns[i],"2",vType )
+
 				switch vType {
 				case "INT", "BIGINT", "TINYINT", "MEDIUMINT":
 					scanRes[i] = &sql.NullInt64{}
@@ -184,21 +184,21 @@ func fetchFromScanner(data sql.Scanner) interface{} {
 	case *sql.NullInt64:
 		if v.Valid {
 			return v.Int64
-		} else {
-			return int64(0)
 		}
+		return int64(0)
+
 	case *sql.NullFloat64:
 		if v.Valid {
 			return v.Float64
-		} else {
-			return float64(0)
 		}
+		return float64(0)
+
 	case *sql.NullString:
 		if v.Valid {
 			return v.String
-		} else {
-			return ""
 		}
+		return ""
+
 	default:
 		// 不可能会运行到这里
 		return nil

@@ -6,11 +6,11 @@ import (
 )
 
 type OriTableInfo struct {
-	COLUMN_NAME    string `orm:"COLUMN_NAME"`
-	DATA_TYPE      string `orm:"DATA_TYPE"`
-	IS_NULLABLE    string `orm:"IS_NULLABLE"`
-	COLUMN_COMMENT string `orm:"COLUMN_COMMENT"`
-	EXTRA          string `orm:"EXTRA"`
+	COLUMNNAME    string `orm:"COLUMN_NAME"`
+	DATATYPE      string `orm:"DATA_TYPE"`
+	ISNULLABLE    string `orm:"IS_NULLABLE"`
+	COLUMNCOMMENT string `orm:"COLUMN_COMMENT"`
+	EXTRA         string `orm:"EXTRA"`
 }
 
 type TableInfo struct {
@@ -34,11 +34,11 @@ func GetBmStrFromTable(dbKit *DB, dbName, tableName string) string {
 		str += "\n"
 	}
 	str += "\n\n\n\n 建表语句=\n"
-	str += getTableCreateSql(dbKit, dbName+"."+tableName)
+	str += getTableCreateSQL(dbKit, dbName+"."+tableName)
 	return str
 }
 
-func getTableCreateSql(dbKit *DB, tableName string) string {
+func getTableCreateSQL(dbKit *DB, tableName string) string {
 	sql := SQLStr("show create table  " + tableName)
 	res, err := sql.Query(dbKit)
 
@@ -56,7 +56,8 @@ func getTableCreateSql(dbKit *DB, tableName string) string {
 }
 
 func getTableInfos(dbKit *DB, dbName, tableName string) []*TableInfo {
-	sql := SQLStr("SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE,  COLUMN_COMMENT, EXTRA FROM INFORMATION_SCHEMA.COLUMNS where TABLE_SCHEMA = ? AND table_name = ? order by ordinal_position asc").AddParams(dbName, tableName)
+	str := "SELECT COLUMN_NAME, DATA_TYPE, IS_NULLABLE,  COLUMN_COMMENT, EXTRA FROM INFORMATION_SCHEMA.COLUMNS where TABLE_SCHEMA = ? AND table_name = ? order by ordinal_position asc"
+	sql := SQLStr(str).AddParams(dbName, tableName)
 
 	res, err := sql.Query(dbKit)
 	if err != nil {
@@ -74,11 +75,11 @@ func getTableInfos(dbKit *DB, dbName, tableName string) []*TableInfo {
 	for _, v := range oriTableInfo {
 		tableInfo := &TableInfo{}
 
-		columnName := strings.ToUpper(v.COLUMN_NAME[0:1]) + v.COLUMN_NAME[1:]
+		columnName := strings.ToUpper(v.COLUMNNAME[0:1]) + v.COLUMNNAME[1:]
 		tableInfo.Field = columnName
 
 		dataType := ""
-		switch strings.ToUpper(v.DATA_TYPE) {
+		switch strings.ToUpper(v.DATATYPE) {
 		case "INT", "BIGINT", "TINYINT", "MEDIUMINT":
 			dataType = "int64"
 		case "FLOAT", "DOUBLE", "DECIMAL":
@@ -86,21 +87,17 @@ func getTableInfos(dbKit *DB, dbName, tableName string) []*TableInfo {
 		case "CHAR", "VARCHAR", "TIME", "TEXT", "BLOB", "GEOMETRY", "BIT", "DATETIME", "DATE", "TIMESTAMP":
 			dataType = "string"
 		default:
-			dataType = v.DATA_TYPE
+			dataType = v.DATATYPE
 		}
 		tableInfo.DataType = dataType
 
-		strTag := "`orm:\"" + v.COLUMN_NAME + "\""
+		strTag := "`orm:\"" + v.COLUMNNAME + "\""
 		if v.EXTRA == "auto_increment" {
 			strTag += " auto:\"1\""
 		}
 		strTag += "`"
 		tableInfo.Tag = strTag
-		tableInfo.Comment = v.COLUMN_COMMENT
-		// fmt.Println("数据类型： ",v.DATA_TYPE)
-		// fmt.Println("是否为空： ",v.IS_NULLABLE)
-		// fmt.Println("字段注释： ",v.COLUMN_COMMENT)
-		// fmt.Println("字段额外： ",v.EXTRA)
+		tableInfo.Comment = v.COLUMNCOMMENT
 		tableInfos = append(tableInfos, tableInfo)
 	}
 	return tableInfos

@@ -147,9 +147,12 @@ func (t *timerKitNode) getAvg() float64 {
 	avg := sum / count
 	return float64(avg) / float64(time.Second)
 }
+
+const FETCHLEN = 10
+
 func (t *timerKitNode) showslow() string {
-	return t.slowest.FetchContents(10)
+	return t.slowest.FetchContents(FETCHLEN)
 }
 func (t *timerKitNode) showlast() string {
-	return t.last.FetchContents(10)
+	return t.last.FetchContents(FETCHLEN)
 }

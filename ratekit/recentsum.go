@@ -35,7 +35,6 @@ func (r *RecentSum) Put(n int) {
 
 }
 func (r *RecentSum) Sum() int {
-	// fmt.Println( r.ints )
 	r.mu.RLock()
 	defer r.mu.RUnlock()
 	sum := 0

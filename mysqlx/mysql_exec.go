@@ -51,7 +51,7 @@ func (s SQL) ConcatSQL(s2 SQL) SQL {
 
 // 执行exec   参数是*DB  or *DbTx
 func (s SQL) Exec(source interface{}) (int64, error) {
-	n, err := execCommon(source, string(s.str), s.params)
+	n, err := execCommon(source, s.str, s.params)
 	return n, err
 }
 func (s SQL) Info() string {

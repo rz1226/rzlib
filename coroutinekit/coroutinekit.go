@@ -1,7 +1,6 @@
 package coroutinekit
 
 import (
-	"errors"
 	"fmt"
 	"github.com/rz1226/rzlib/serverkit"
 	"net/http"
@@ -65,21 +64,20 @@ func newCoroutineKit() *CoroutineKit {
 }
 
 // 加入goroutine，1 名称，不要重复，重复会报错，2 启动多少个goroutine 3 执行函数  4 遇到panic后是否要重新启动
-func (ck *CoroutineKit) start(name string, num int, f func(), panicRestart bool) error {
+func (ck *CoroutineKit) start(name string, num int, f func(), panicRestart bool) {
 	ck.mu.Lock()
 	defer ck.mu.Unlock()
 	name = strings.TrimSpace(name)
 	// 检查是否有重复名称
 	_, ok := ck.nodeNames[name]
 	if ok {
-		return errors.New("coroutinekit start error :duplicated name")
+		fmt.Println("coroutinekit start error :duplicated name")
+		return
 	}
 	node := newNode(ck, name, num, f, panicRestart)
 	ck.nodes = append(ck.nodes, node)
 	ck.nodeNames[name] = node
 	node.start() // 启动
-	return nil
-
 }
 
 func (ck *CoroutineKit) showAll() string {
@@ -276,7 +274,15 @@ func (r *Routine) show() (readme string, countRun, countQuit, countPanic, countA
 	return str, num1, num2, num3, num4, num5
 }
 
-/**********************************************监控***************************************************/
+/*
+
+
+
+ *********************************************监控**************************************************
+
+
+ */
+
 var StartedMonitor int32 = 0
 
 func StartMonitor(port string) {

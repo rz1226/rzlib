@@ -13,9 +13,9 @@ import (
     去掉了retry， 因为没啥用处，反而使得设计更难. 重试是在调用方处理是最明智的。
 */
 
-const RATEKITCHANSIZE = 100               // 任务队列chan长度
-const MAX_TASK_NUM_EVERY_SECOND = 1000000 // 最大速度
-const FACTORY_SIZE = 200
+const RATEKITCHANSIZE = 100           // 任务队列chan长度
+const MAXTASKNUMEVERYSECOND = 1000000 // 最大速度
+const FACTORYSIZE = 200
 
 type Task struct {
 	f func() bool // 任务函数，要符合这个格式，实际应用中一般来说是个闭包
@@ -34,16 +34,16 @@ type RateKit struct {
 func NewRateKit(limitCount uint32) *RateKit {
 	rk := &RateKit{}
 	rk.currentCount = 0
-	if limitCount > MAX_TASK_NUM_EVERY_SECOND {
-		limitCount = MAX_TASK_NUM_EVERY_SECOND
+	if limitCount > MAXTASKNUMEVERYSECOND {
+		limitCount = MAXTASKNUMEVERYSECOND
 	}
 	rk.limitCountPerSecond = limitCount
 	rk.asynChan = make(chan Task, RATEKITCHANSIZE)
-	rk.tokenChan = make(chan struct{}, MAX_TASK_NUM_EVERY_SECOND)
+	rk.tokenChan = make(chan struct{}, MAXTASKNUMEVERYSECOND)
 	rk.bb = blackboardkit.NewBlockBorad("ratekit", "ratekit", "限速器记录")
 
 	// 启动异步任务go程
-	rk.factory = newFactory(rk.asynTask, FACTORY_SIZE)
+	rk.factory = newFactory(rk.asynTask, FACTORYSIZE)
 	rk.factory.setRunning()
 	go rk.resetAll()
 	go rk.releaseToken()
@@ -154,11 +154,14 @@ func (w *Worker) setStop() {
 	atomic.StoreUint32(&w.running, 0)
 }
 
+const PANICRESTARTTIME = 20
+const PANICRESTARTTIMERAND = 300
+
 func (w *Worker) run() {
 	defer func() {
 		if co := recover(); co != nil {
 			w.factory.bb.Panic("worker_panic", "worker 发生异常:", co)
-			time.Sleep(time.Millisecond * time.Duration(20+getRandInt(300))) // 如果挂了，等一点点时间再重启，防止无限挂跑死cpu
+			time.Sleep(time.Millisecond * time.Duration(PANICRESTARTTIME+getRandInt(PANICRESTARTTIMERAND))) // 如果挂了，等一点点时间再重启，防止无限挂跑死cpu
 			w.run()
 		}
 	}()
