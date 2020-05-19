@@ -4,18 +4,18 @@ package cache
 
 import (
 	"errors"
-	"github.com/karlseguin/ccache"
+	gccache "github.com/karlseguin/ccache"
 	"time"
 )
 
 type CCache struct {
-	c *ccache.Cache
+	c *gccache.Cache
 }
 
 func NewCCache(maxSize int) *CCache {
 	cache := new(CCache)
 	count := uint32(maxSize/10 + 1)
-	cache.c = ccache.New(ccache.Configure().MaxSize(int64(maxSize)).ItemsToPrune(count))
+	cache.c = gccache.New(gccache.Configure().MaxSize(int64(maxSize)).ItemsToPrune(count))
 	return cache
 }
 
