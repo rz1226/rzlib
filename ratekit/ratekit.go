@@ -55,12 +55,13 @@ func (rk *RateKit) incCount() {
 }
 
 func (rk *RateKit) resetAll() {
-	t1 := time.Tick(time.Second)
+	t1 := time.NewTicker(time.Second)
 	for {
-		<-t1
+		<-t1.C
 		rk.bb.Log("重置清零 currentcount=" + fmt.Sprint(atomic.LoadUint32(&rk.currentCount)))
 		atomic.StoreUint32(&rk.currentCount, 0)
 	}
+
 
 }
 
@@ -71,9 +72,9 @@ func (rk *RateKit) getLimitCount() uint32 {
 // 放令牌
 func (rk *RateKit) releaseToken() {
 	limit := rk.getLimitCount()
-	t1 := time.Tick(time.Second)
+	t1 := time.NewTicker(time.Second)
 	for {
-		<-t1
+		<-t1.C
 		now := time.Now()
 		for i := 0; i < int(limit); i++ {
 			rk.tokenChan <- struct{}{}
