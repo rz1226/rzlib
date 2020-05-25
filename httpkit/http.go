@@ -1,6 +1,8 @@
 package httpkit
 
 import (
+	"bytes"
+	"errors"
 	"fmt"
 	"github.com/rz1226/rzlib/blackboardkit"
 	"io/ioutil"
@@ -52,7 +54,7 @@ func (hc *HTTPClient) Post(urlStr, body string) (string, error) {
 		hc.bb.Err("http post read error: ", " url="+urlStr, "err=", err)
 		return "", err
 	}
-	hc.bb.Log("http post result: ", " url="+urlStr, "body="+body, " resp="+string(content))
+	hc.bb.Log("http post result: ", " url="+urlStr, "body="+body, "resp="+string(content))
 	return string(content), nil
 }
 
@@ -70,7 +72,7 @@ func (hc *HTTPClient) PostForm(urlStr string, data url.Values) (string, error) {
 		hc.bb.Err("http post read error: ", " url="+urlStr, "err=", err)
 		return "", err
 	}
-	hc.bb.Log("http post result:", " url="+urlStr, "data="+fmt.Sprint(data), " resp: "+string(body))
+	hc.bb.Log("http post result:", " url="+urlStr, "data="+fmt.Sprint(data), "resp: "+string(body))
 	return string(body), nil
 }
 
@@ -92,19 +94,39 @@ func (hc *HTTPClient) Get(urlStr string) (string, error) {
 	return string(body), nil
 }
 
+
+//copy request.Body
+func copyBody(r *http.Request) (string , error) {
+	if r.Body != nil {
+		bodyBytes, err := ioutil.ReadAll(r.Body)
+		// 把刚刚读出来的再写进去
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(bodyBytes))
+		return string(bodyBytes), err
+	}
+	return "", errors.New("empty body")
+}
+
+
 func (hc *HTTPClient) Do(req *http.Request) (string, error) {
-	res, err := hc.client.Do(req)
+	// 复制body ,日志用
+	bodyForLog, err := copyBody( req )
 	if err != nil {
-		hc.bb.Err("http   error:", "  url="+req.URL.String(), "header="+fmt.Sprint(req.Header), "body="+fmt.Sprint(req.Body), "err=", err)
+		bodyForLog = ""
+	}
+
+	res, err := hc.client.Do(req)
+
+	if err != nil {
+		hc.bb.Err("http   error:", "  url="+req.URL.String(), "header="+fmt.Sprint(req.Header), "body="+fmt.Sprint(bodyForLog), "err=", err)
 		return "", err
 	}
 	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
-		hc.bb.Err("http   error: ", " url="+req.URL.String(), "header="+fmt.Sprint(req.Header), "body="+fmt.Sprint(req.Body), "err=", err)
+		hc.bb.Err("http   error: ", " url="+req.URL.String(), "header="+fmt.Sprint(req.Header), "body="+fmt.Sprint(bodyForLog), "err=", err)
 
 		return "", err
 	}
-	hc.bb.Log("http  result:", "url="+req.URL.String(), "header="+fmt.Sprint(req.Header), "body="+fmt.Sprint(req.Body), " resp: "+string(body))
+	hc.bb.Log("http  result:", "url="+req.URL.String(), "header="+fmt.Sprint(req.Header), "body="+fmt.Sprint(bodyForLog), "resp: "+string(body))
 	return string(body), nil
 }

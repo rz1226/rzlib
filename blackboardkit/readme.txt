@@ -8,7 +8,7 @@ bb = blackboardkit.NewBlockBorad(groupname, bbname, bbreadme)
 
 
 //如何监控
-import "github.com/rz1226/simplegokit/blackboardkit"
+import "github.com/rz1226/rzlib/blackboardkit"
 func main(){
     blackboardkit.StartMonitor("9091" ) // 用浏览器看9091/查看监控数据
 }

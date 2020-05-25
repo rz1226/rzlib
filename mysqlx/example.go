@@ -10,8 +10,6 @@ type Tai struct {
 	Some        string
 }
 
-
-
 func testmany() {
 	sqlstr := "select * from tai"
 	var u  []*repo.Tai
@@ -40,20 +38,19 @@ func testone() {
 
 	var d []*repo.Tai
 	mysqlx.Map2Struct(m,&d )
-	fmt.Println(mysqlx.NewBM(&d).ToSqlInsert("x"))
+	fmt.Println(mysqlx.NewBM(&d).ToSQLInsert("x"))
 
 
-	// sql, err := mysqlx.NewBM(u).ToSqlInsert("tai")
+	// sql, err := mysqlx.NewBM(u).ToSQLInsert("tai")
 	// fmt.Println(sql.Info(), err)
 
 
-
-	// sql2, err := mysqlx.NewBM(u).ToSqlUpdate("tai", nil,"")
+	// sql2, err := mysqlx.NewBM(u).ToSQLUpdate("tai", nil,"")
 	// fmt.Println(sql2.Info(), err)
 
 
-	// condition := mysqlx.SqlStr(" where id =? and name =?").AddParams(2,"mike")
-	// sql3 := sql2.ConcatSql(condition )
+	// condition := mysqlx.SQLStr(" where id =? and name =?").AddParams(2,"mike")
+	// sql3 := sql2.ConcatSQL(condition )
 	// fmt.Println(sql3.Info())
 
 }
