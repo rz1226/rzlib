@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/rz1226/rzlib/blackboardkit"
+	"io"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -57,6 +58,26 @@ func (hc *HTTPClient) Post(urlStr, body string) (string, error) {
 	hc.bb.Log("http post result: ", " url="+urlStr, "body="+body, "resp="+string(content))
 	return string(content), nil
 }
+
+
+func (hc *HTTPClient) Post2(url string, bodyType string, body io.Reader) (string, error) {
+	t := hc.bb.Start( "http post2: "+url)
+	res, err := hc.client.Post(url, bodyType, body)
+	hc.bb.End(t)
+	if err != nil {
+		hc.bb.Err( "http post error: url="+url, "err=",err)
+		return "", err
+	}
+	defer res.Body.Close()
+	content, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		hc.bb.Err( "http post read error: url="+url, "err=",err)
+		return "", err
+	}
+	hc.bb.Log( "http post2 result:"+url, " resp: "+string(content))
+	return string(content), nil
+}
+
 
 func (hc *HTTPClient) PostForm(urlStr string, data url.Values) (string, error) {
 	t := hc.bb.Start("http post: " + urlStr)
