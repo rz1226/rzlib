@@ -29,6 +29,6 @@ func Test_post2(t *testing.T ){
 	str, err := httpC.Post2(robot, "application/json;charset=utf-8", buf )
 
 	fmt.Println( str, err )
- 
+
 
 }

@@ -54,6 +54,41 @@ func testone() {
 	// fmt.Println(sql3.Info())
 
 }
+var MYSQL_HOST = strings.TrimSpace(os.Getenv("XX_MYSQL_HOST"))
+var MYSQL_PORT = strings.TrimSpace(os.Getenv("XX_MYSQL_PORT"))
+var MYSQL_USERNAME = strings.TrimSpace(os.Getenv("XX_MYSQL_USERNAME"))
+var MYSQL_PASSWORD = strings.TrimSpace(os.Getenv("XX_MYSQL_PASSWORD"))
+var HBASE_HOST = strings.TrimSpace(os.Getenv("XX_HBASE_HOST"))
+var HBASE_USER = strings.TrimSpace(os.Getenv("XX_HBASE_USER"))
+var HBASE_PASS = strings.TrimSpace(os.Getenv("XX_HBASE_PASS"))
 
+
+
+
+var Kit *mysqlx.DB
+
+
+func init() {
+	dbconf := mysqlx.NewDBConf(conf.MYSQL_USERNAME, conf.MYSQL_PASSWORD, conf.MYSQL_HOST, conf.MYSQL_PORT, "tai", 4)
+	kit, err := dbconf.Connect()
+
+	if err != nil {
+		fmt.Println(dbconf.Str(), err)
+		panic("no db ")
+	}
+	Kit = kit
+
+	mysqlx.Conf.TagName = "orm"
+
+	f := func(tags reflect.StructTag) bool {
+		tag := tags.Get("auto")
+		if tag == "1" {
+			return true
+		}
+		return false
+	}
+	mysqlx.Conf.FuncAuto = f
+
+}
 
 */
