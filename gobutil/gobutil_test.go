@@ -64,7 +64,7 @@ func Test_to_bytes_to_struct(t *testing.T) {
 	fmt.Println("bytes =", b )
 
 	p2 := Person{}
-	err = ToStruct(b, &p2)
+	err = ToStruct([]byte(string(b)), &p2)
 	if err != nil {
 		fmt.Println(err)
 	}
