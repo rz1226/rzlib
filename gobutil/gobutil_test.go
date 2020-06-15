@@ -44,3 +44,29 @@ func Check(e error) {
 		os.Exit(1)
 	}
 }
+
+type Person struct {
+	Name string
+	Age  int
+}
+
+func Test_to_bytes_to_struct(t *testing.T) {
+	fmt.Println("Test_to_bytes_to_struct")
+
+	p := Person{}
+	p.Name = "mk"
+	p.Age = 12
+
+	b, err := ToBytes(p)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println("bytes =", b )
+
+	p2 := Person{}
+	err = ToStruct(b, &p2)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(p2)
+}

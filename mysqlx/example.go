@@ -29,7 +29,8 @@ func testmany() {
 func testone() {
 	sqlstr := "select * from tai"
 	u := new(repo.Tai )
-	res := mysqlx.SqlStr(sqlstr).AddParams().Query(repo.Kit).ToStruct( u)
+	res, err := mysqlx.SqlStr(sqlstr).AddParams().Query(repo.Kit)
+	res.ToStruct( u)
 	fmt.Println(res)
 	fmt.Println("data=", u)
 
