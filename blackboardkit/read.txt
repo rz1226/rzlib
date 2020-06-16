@@ -1,9 +1,0 @@
-package main
-
-import(
-	"github.com/rz1226/simplegokit/blackboardkit"
-	"fmt"
-	"time"
-)
-
-//见example/bb
