@@ -1,6 +1,7 @@
 package mysqlx
 
 import (
+	"bytes"
 	dsql "database/sql"
 	"errors"
 	"fmt"
@@ -14,7 +15,12 @@ type SQLStr string
 func (ss SQLStr) AddParams(params ...interface{}) SQL {
 	sql := SQL{}
 	sql.str = string(ss)
-	sql.params = params
+	if len(params) > 0 {
+		sql.params = params
+	}else{
+		sql.params = make([]interface{},0)
+	}
+
 	return sql
 }
 
@@ -42,12 +48,73 @@ type SQL struct {
 	params []interface{}
 }
 
+func NewSQL( str string, params []interface{} ) SQL{
+	sql := SQL{}
+	sql.str = str
+	sql.params = params
+	return sql
+}
+
+
 // 补上一个条件
 func (s SQL) ConcatSQL(s2 SQL) SQL {
-	s.str += s2.str
-	s.params = append(s.params, s2.params...)
-	return s
+	res := NewSQL(s.str, s.params[:])
+	res.str += s2.str
+	res.params = append(res.params, s2.params...)
+	return res
 }
+
+//补上一个 where in 语句
+func (s SQL) In (key string, params []string ) SQL{
+	str, args := makeBatchSelectStr(params )
+
+	sql2 := NewSQL(" where `"+key +"`" + " in " + str +" ", args)
+	sql := s.ConcatSQL(sql2 )
+	return sql
+}
+func (s SQL) AndIn (key string, params []string ) SQL{
+	str, args := makeBatchSelectStr(params )
+
+	sql2 := NewSQL(" and `"+key +"`" + " in " + str +" ", args)
+	sql := s.ConcatSQL(sql2 )
+	return sql
+}
+
+
+
+//辅助生成类似  in(?,?,?,?) 批量查询的sql
+func makeBatchSelectStr(data []string  )( string, []interface{}  ){
+	length := len(data)
+	if length == 0 {
+		return "", nil
+	}
+
+	params := make([]interface{},0,length)
+
+	sqlStringBuffer := bytes.Buffer{}
+	sqlStringBuffer.WriteString("(")
+
+	for k, v := range data {
+		params = append(params , v )
+		if length == k+1 {
+			sqlStringBuffer.WriteString("?")
+		} else {
+			sqlStringBuffer.WriteString("?,")
+		}
+	}
+	sqlStringBuffer.WriteString(")")
+
+
+
+	return sqlStringBuffer.String(),  params
+
+}
+
+
+
+
+
+
 
 // 执行exec   参数是*DB  or *DbTx
 func (s SQL) Exec(source interface{}) (int64, error) {
