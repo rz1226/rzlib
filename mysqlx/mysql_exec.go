@@ -80,6 +80,28 @@ func (s SQL) AndIn (key string, params []string ) SQL{
 	return sql
 }
 
+func (s SQL) clone() SQL{
+	return  NewSQL(s.str, s.params[:])
+}
+
+func (s SQL) Limit(limit int ) SQL{
+	sql := s.clone()
+	sql.str += " limit " + fmt.Sprint(limit )
+	return sql
+}
+
+func (s SQL) Offset(offset int ) SQL{
+	sql := s.clone()
+	sql.str += " offset " + fmt.Sprint(offset )
+	return sql
+}
+
+
+func (s SQL) OrderBy(order string ) SQL{
+	sql := s.clone()
+	sql.str += " order by " + fmt.Sprint(order )
+	return sql
+}
 
 
 //辅助生成类似  in(?,?,?,?) 批量查询的sql
